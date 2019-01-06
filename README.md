@@ -3,23 +3,22 @@
 Dev Fee
 -------
 
-In order to support development, this miner has 1% dev fee included - 1 minute from 100 minutes it will mine for developer.
+In order to support development, this miner has 1% dev fee included - 
+1 minute from 100 minutes it will mine for developer.
 
 Description
 ----------
 
-multiminer is a fork of cpuminer-opt by Jay D Dee. (https://github.com/JayDDee/cpuminer-opt)
+multiminer is a fork of cpuminer-opt by Jay D Dee. 
+(https://github.com/JayDDee/cpuminer-opt)
 
-All of the code is believed to be open and free. If anyone has a
-claim to any of it post your case in the cpuminer-opt Bitcoin Talk forum
-or by email.
+I've added support for GPU mining a couple of Argon2D coins:
+Zumy (argon2d250), Dynamic (argon2d500) and Argentum/Unitus (argon2d4096)
 
 Miner programs are often flagged as malware by antivirus programs. This is
 a false positive, they are flagged simply because they are cryptocurrency 
 miners. The source code is open for anyone to inspect. If you don't trust 
 the software, don't use it.
-
-See file RELEASE_NOTES for change log and compile instructions.
 
 Requirements
 ------------
@@ -44,6 +43,72 @@ don't work due to missing features.
 MacOS, OSx and Android are not supported.
 
 3. Stratum pool. Some algos may work wallet mining using getwork or GBT. YMMV.
+
+Building Process
+---------------
+
+This build instructions are for Ubuntu 18.04. For any other distribution you might
+need to adapt them accordingly (especially CUDA installation). Also keep in mind CUDA
+toolkit installed in the following manner might change your drivers.
+
+1. Install required dependencies:
+```sh
+sudo apt-get install git cmake gcc-6 g++-6 libjansson-dev libcurl4-openssl-dev libssl-dev libgmp-dev nvidia-cuda-toolkit  
+```
+2. CUDA version in Ubuntu 18.04 is 9.1. This version works only with gcc/g++ 6.x, 
+while default compiler version is 7. You can check the version you are running using this command:
+```sh
+gcc --version
+```
+3. If compiler version is different than 6 than do this (next commands suppose you have 7
+as default version, change accordingly if this is not the case):
+```sh
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 10
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 20
+
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 10
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 20
+
+sudo update-alternatives --config gcc
+sudo update-alternatives --config g++
+```
+4. Clone the repository:
+```sh
+git clone http://github.com/bogdanadnan/multiminer
+```
+5. Build the source code:
+```sh
+cd multiminer
+mkdir build
+cd build
+cmake ..
+make
+```
+6. You should now have a binary called multiminer in current folder.
+
+For Windows, binaries will be provided soon.
+
+Usage
+-----
+This miner has the same general options as cpuminer-opt by Jay D Dee.
+Please check regular usage on its GitHub repository:
+https://github.com/JayDDee/cpuminer-opt
+
+In order to enable gpu mining there are additional options:
+
+```sh
+          --use-gpu=CUDA|OPENCL Use GPU for algorithms supporting it (Argon2d)
+          --gpu-id=N        Use GPU device with specific index in detected devices - default 1
+          --gpu-batchsize=N Specify batch size - default 1
+```
+
+The regular threads option (-t) when used in combination with --use-gpu, will control 
+number of threads started on each card you have. You will have to play with threads and
+batchsize numbers to get best hashrate.
+When using OpenCL keep in mind that the program will take a LOT of time to start
+hashing (from tens of seconds to minutes, depending on how many threads you want to start).
+Please be patient :). 
+Also, if you have Nvidia cards, always use CUDA, it gives best performance.
 
 Supported Algorithms
 --------------------
