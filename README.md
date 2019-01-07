@@ -56,6 +56,7 @@ toolkit installed in the following manner might change your drivers.
 sudo apt-get install git cmake gcc g++ libjansson-dev libcurl4-openssl-dev libssl-dev libgmp-dev ocl-icd-opencl-dev  
 ```
 2. Install CUDA toolkit (vers. 9.x or newer). This process differes on Ubuntu 16.04 and 18.04
+
 For Ubuntu 16.04, default nvidia toolkit is too old so please follow the instructions from 
 Nvidia site to get a newer version: 
 https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
