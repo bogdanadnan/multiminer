@@ -61,7 +61,7 @@ set(SOURCE
         algo/bmw/bmw256.c
         algo/cryptonight/cryptolight.c
 #        algo/cryptonight/cryptonight-common.c
-        algo/cryptonight/cryptonight-aesni.c
+#        algo/cryptonight/cryptonight-aesni.c
 #        algo/cryptonight/cryptonight.c
         algo/cubehash/sph_cubehash.c
         algo/cubehash/sse2/cubehash_sse2.c
