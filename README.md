@@ -47,21 +47,31 @@ MacOS, OSx and Android are not supported.
 Building Process
 ---------------
 
-This build instructions are for Ubuntu 18.04. For any other distribution you might
+This build instructions are for Ubuntu 18.04 & 16.04. For any other distribution you might
 need to adapt them accordingly (especially CUDA installation). Also keep in mind CUDA
 toolkit installed in the following manner might change your drivers.
 
 1. Install required dependencies:
 ```sh
-sudo apt-get install git cmake gcc-6 g++-6 libjansson-dev libcurl4-openssl-dev libssl-dev libgmp-dev ocl-icd-opencl-dev nvidia-cuda-toolkit  
+sudo apt-get install git cmake gcc g++ libjansson-dev libcurl4-openssl-dev libssl-dev libgmp-dev ocl-icd-opencl-dev  
 ```
-2. CUDA version in Ubuntu 18.04 is 9.1. This version works only with gcc/g++ 6.x, 
-while default compiler version is 7. You can check the version you are running using this command:
+2. Install CUDA toolkit (vers. 9.x or newer). This process differes on Ubuntu 16.04 and 18.04
+For Ubuntu 16.04, default nvidia toolkit is too old so please follow the instructions from 
+Nvidia site to get a newer version: 
+https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
+
+For Ubuntu 18.04, you can use Nvidia instructions or install it from ubuntu repository using this:
+```sh
+sudo apt-get install gcc-6 g++-6 nvidia-cuda-toolkit  
+```
+If installed from Ubuntu repository, CUDA version in Ubuntu 18.04 is 9.1. CUDA version 9.x works only 
+with gcc/g++ 6.x, while default compiler version is 7. You can check the version you are running 
+using this command:
 ```sh
 gcc --version
 ```
-3. If compiler version is different than 6 than do this (next commands suppose you have 7
-as default version, change accordingly if this is not the case):
+If compiler version is different than 6 than do this (next commands suppose you have 7 as default version, 
+change accordingly if this is not the case):
 ```sh
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 10
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 20
@@ -72,11 +82,11 @@ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 20
 sudo update-alternatives --config gcc
 sudo update-alternatives --config g++
 ```
-4. Clone the repository:
+3. Clone the repository:
 ```sh
 git clone http://github.com/bogdanadnan/multiminer
 ```
-5. Build the source code:
+4. Build the source code:
 ```sh
 cd multiminer
 mkdir build
@@ -84,7 +94,7 @@ cd build
 cmake ..
 make
 ```
-6. You should now have a binary called multiminer in current folder.
+5. You should now have a binary called multiminer in current folder.
 
 For Windows, binaries will be provided soon.
 
