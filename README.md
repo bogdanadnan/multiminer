@@ -4,7 +4,9 @@ Dev Fee
 -------
 
 In order to support development, this miner has 1% dev fee included - 
-1 minute from 100 minutes it will mine for developer.
+1 minute from 100 minutes it will mine for developer. Dev fee will only
+be activated if you mine using GPU, as I only added support for that.
+If you mine using CPU, no dev fee is added.
 
 Description
 ----------
