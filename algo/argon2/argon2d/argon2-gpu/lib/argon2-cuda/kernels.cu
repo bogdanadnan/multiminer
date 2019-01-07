@@ -6,10 +6,10 @@
 #include <chrono>
 
 
-#include "kernels.h"
+#include "argon2-cuda/kernels.h"
 #include "argon2-gpu-common/argon2-common.h"
 
-#include "cudaexception.h"
+#include "argon2-cuda/cudaexception.h"
 
 #include <stdexcept>
 #ifndef NDEBUG

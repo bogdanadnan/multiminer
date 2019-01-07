@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 project (multiminer C ASM CXX)
-
+set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 
 include(FindJansson.cmake)
@@ -303,6 +303,10 @@ include_directories(${CURL_INCLUDE_DIR})
 include_directories(${JANSSON_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${GMP_INCLUDES})
+
+if(CUDA_FOUND)
+    include_directories(${CUDA_INCLUDE_DIRS})
+endif()
 
 target_link_libraries(multiminer argon2-cuda argon2-opencl argon2 -lOpenCL ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
 

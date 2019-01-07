@@ -43,6 +43,8 @@ target_include_directories(argon2-gpu-common PRIVATE
     lib/argon2-gpu-common
 )
 
+include_directories(include)
+
 if(CUDA_FOUND)
     cuda_add_library(argon2-cuda SHARED
         lib/argon2-cuda/device.cpp
@@ -51,6 +53,7 @@ if(CUDA_FOUND)
         lib/argon2-cuda/processingunit.cpp
             lib/argon2-cuda/kernels.cu
     )
+    include_directories(${CUDA_INCLUDE_DIRS})
 else()
     add_library(argon2-cuda SHARED
         lib/argon2-cuda/nocuda.cpp)
