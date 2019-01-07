@@ -79,7 +79,9 @@ void gpu_argon2_raw_hash(argon2_gpu_hasher_thread *thread_data) {
 		pu->endProcessing();
 
 		for (std::size_t i = 0; i < gpu_batch_size; i++) {
-			memcpy(thread_data->vhash + 8 * i, pu->getHash(i), pu->getParams()->getOutputLength());
+			void *hash = pu->getHash(i);
+			if(hash != NULL)
+				memcpy(thread_data->vhash + 8 * i, hash, pu->getParams()->getOutputLength());
 		}
 	}
 	else {

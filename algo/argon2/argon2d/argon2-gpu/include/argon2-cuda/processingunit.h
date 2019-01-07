@@ -69,7 +69,7 @@ public:
     void setPassword(std::size_t index, const void *pw, std::size_t pwSize) { }
     void setPasswordSameSalt(std::size_t index, const void *pw, std::size_t pwSize);
 
-    void getHash(std::size_t index, void *hash) { }
+    void *getHash(std::size_t index) { return NULL; }
 
     void beginProcessing() { }
     void endProcessing() { }
