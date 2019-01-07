@@ -51,7 +51,9 @@ Building Process
 
 This build instructions are for Ubuntu 18.04 & 16.04. For any other distribution you might
 need to adapt them accordingly (especially CUDA installation). Also keep in mind CUDA
-toolkit installed in the following manner might change your drivers.
+toolkit installed in the following manner might change your drivers. The miner should
+compile ok without CUDA, case in which it will use only OpenCL. Just skip any CUDA mention
+from following instructions if you don't need it.
 
 1. Install required dependencies:
 ```sh
@@ -117,7 +119,17 @@ In order to enable gpu mining there are additional options:
 
 The regular threads option (-t) when used in combination with --use-gpu, will control 
 number of threads started on each card you have. You will have to play with threads and
-batchsize numbers to get best hashrate.
+batchsize numbers to get best hashrate. Please note that batchsize is required to get a
+normal speed. It should be given in powers of 2 (though that is not mandatory, but is better).
+The batchsize represents the number of hashes calculated by the card in a call. Threads multiplied
+by batchsize multiplied by argon2d memory requirements (250KB for Zumy, 500KB for Dynamic
+and 4096KB for Argentum/Unitus) should not exceed available card memory.
+Sample command line:
+
+```sh
+./multiminer -a argon2d250 -o stratum+tcp://pooladdress:port -u walletaddress -p c=ZMY,workername --use-gpu CUDA -t 4 --gpu-batchsize 2048
+```
+
 When using OpenCL keep in mind that the program will take a LOT of time to start
 hashing (from tens of seconds to minutes, depending on how many threads you want to start).
 Please be patient :). 

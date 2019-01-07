@@ -57,11 +57,12 @@ class ProcessingUnit
 {
 public:
     std::size_t getBatchSize() const { return 0; }
+    const Argon2Params *getParams() const { return params; }
 
     ProcessingUnit(
             const ProgramContext *programContext, const Argon2Params *params,
             const Device *device, std::size_t batchSize,
-            bool bySegment = true, bool precomputeRefs = false)
+            bool bySegment = true, bool precomputeRefs = false) : params(params)
     {
     }
 
@@ -72,6 +73,8 @@ public:
 
     void beginProcessing() { }
     void endProcessing() { }
+private:
+    const Argon2Params *params;
 };
 
 } // namespace cuda
