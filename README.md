@@ -53,7 +53,7 @@ toolkit installed in the following manner might change your drivers.
 
 1. Install required dependencies:
 ```sh
-sudo apt-get install git cmake gcc-6 g++-6 libjansson-dev libcurl4-openssl-dev libssl-dev libgmp-dev nvidia-cuda-toolkit  
+sudo apt-get install git cmake gcc-6 g++-6 libjansson-dev libcurl4-openssl-dev libssl-dev libgmp-dev ocl-icd-opencl-dev nvidia-cuda-toolkit  
 ```
 2. CUDA version in Ubuntu 18.04 is 9.1. This version works only with gcc/g++ 6.x, 
 while default compiler version is 7. You can check the version you are running using this command:
