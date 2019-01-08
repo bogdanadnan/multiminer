@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(argon2-gpu CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(OpenCL)
 
@@ -22,7 +23,7 @@ endif()
 
 if(CUDA_FOUND)
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};
-        -std=c++11;-O3;--ptxas-options=-v;-arch sm_30;-lineinfo
+        -std=c++11;--compiler-options=-fPIC;-O3;--ptxas-options=-v;-arch sm_30;-lineinfo
     )
 endif()
 
