@@ -24,8 +24,8 @@ namespace cuda {
 GlobalContext::GlobalContext()
     : devices()
 {
-    int count;
-    CudaException::check(cudaGetDeviceCount(&count));
+	int count;
+	CudaException::check(cudaGetDeviceCount(&count));
 
     devices.reserve(count);
     for (int i = 0; i < count; i++) {

@@ -1,4 +1,4 @@
-#include "argon2d-gate.h"
+#include "argon2d-gpu-gate.h"
 
 #include "argon2-gpu/include/argon2-gpu-common/argon2params.h"
 #include "argon2-gpu/include/argon2-opencl/processingunit.h"
@@ -12,21 +12,10 @@
 using namespace argon2;
 
 int gpu_device_count = 0;
-
-struct argon2_gpu_hasher_thread {
-	argon2_gpu_hasher_thread() {
-		vhash = (uint32_t*)malloc(gpu_batch_size * 8 * sizeof(uint32_t));
-		endiandata = (uint32_t*)malloc(gpu_batch_size * 20 * sizeof(uint32_t));
-		processing_unit = NULL;
-	}
-	~argon2_gpu_hasher_thread() {
-		free(vhash);
-		free(endiandata);
-	}
-	void *processing_unit;
-	uint32_t *vhash;
-	uint32_t *endiandata;
-};
+char *use_gpu = NULL;
+int gpu_id = -1;
+int gpu_batch_size = 1;
+int total_threads = 1;
 
 std::unordered_map<int, argon2_gpu_hasher_thread *> argon2_gpu_hashers;
 std::mutex argon2_gpu_hashers_mutex;
@@ -43,14 +32,17 @@ bool init_gpu(int thr_id, Type type, Version version, Argon2Params *params) {
 		selected_device = gpu_id;
 	}
 	else {
-		selected_device = thr_id / (opt_n_threads / gpu_device_count);
+		selected_device = thr_id / (total_threads / gpu_device_count);
 	}
 
 	for (std::size_t i = 0; i < devices.size(); i++) {
 		if(i == selected_device) {
 			auto &device = devices[i];
 
-			argon2_gpu_hasher_thread *argon2_gpu_hasher_thread_data = new argon2_gpu_hasher_thread();
+			argon2_gpu_hasher_thread *argon2_gpu_hasher_thread_data = (argon2_gpu_hasher_thread *)malloc(sizeof(argon2_gpu_hasher_thread));
+			argon2_gpu_hasher_thread_data->vhash = (uint32_t*)malloc(gpu_batch_size * 8 * sizeof(uint32_t));
+			argon2_gpu_hasher_thread_data->endiandata = (uint32_t*)malloc(gpu_batch_size * 20 * sizeof(uint32_t));
+			argon2_gpu_hasher_thread_data->processing_unit = NULL;
 
 			ProgramContext *progCtx = new ProgramContext(context, {device}, type, version);
 			argon2_gpu_hasher_thread_data->processing_unit = new ProcessingUnit(progCtx, params, &device, gpu_batch_size, false);
@@ -67,7 +59,7 @@ bool init_gpu(int thr_id, Type type, Version version, Argon2Params *params) {
 }
 
 template<class ProcessingUnit>
-void gpu_argon2_raw_hash(argon2_gpu_hasher_thread *thread_data) {
+void gpu_argon2_raw_hash_gate(argon2_gpu_hasher_thread *thread_data) {
 	if(thread_data != NULL && thread_data->processing_unit != NULL) {
 		ProcessingUnit *pu = (ProcessingUnit *) thread_data->processing_unit;
 
@@ -88,6 +80,13 @@ void gpu_argon2_raw_hash(argon2_gpu_hasher_thread *thread_data) {
 		std::cerr<<"Thread not initialized."<<std::endl;
 		exit(1);
 	}
+}
+
+void gpu_argon2_raw_hash(argon2_gpu_hasher_thread *thread_data) {
+	if(use_gpu[0] == 'C')
+		gpu_argon2_raw_hash_gate<cuda::ProcessingUnit>(thread_data);
+	else
+		gpu_argon2_raw_hash_gate<opencl::ProcessingUnit>(thread_data);
 }
 
 bool init_thread_argon2d(int thr_id, argon2::Type type, argon2::Version version, Argon2Params *params) {
@@ -127,157 +126,14 @@ bool init_thread_argon2d_crds_gpu(int thr_id) {
 	return init_thread_argon2d(thr_id, ARGON2_D, ARGON2_VERSION_10, new Argon2Params(32, nullptr, 0, nullptr, 0, nullptr, 0, 1, 250, 4));
 }
 
-int scanhash_argon2d_dyn_gpu(int thr_id, struct work *work, uint32_t max_nonce,
-							 uint64_t *hashes_done) {
+argon2_gpu_hasher_thread *get_gpu_thread_data(int thr_id) {
 	argon2_gpu_hasher_thread *thread_data = NULL;
-	uint32_t *vhash;
-	uint32_t *endiandata;
 	argon2_gpu_hashers_mutex.lock();
 	if(argon2_gpu_hashers.find(thr_id) != argon2_gpu_hashers.end()) {
 		thread_data = argon2_gpu_hashers[thr_id];
 	}
 	argon2_gpu_hashers_mutex.unlock();
-
-	uint32_t *pdata = work->data;
-	uint32_t *ptarget = work->target;
-	const uint32_t Htarg = ptarget[7];
-	const uint32_t first_nonce = pdata[19];
-	uint32_t n = first_nonce;
-
-	for(int i=0;i<gpu_batch_size;i++) {
-		endiandata = thread_data->endiandata + 20 * i;
-		swab32_array(endiandata, pdata, 20);
-	}
-
-	do {
-		for(int i=0;i<gpu_batch_size;i++) {
-			endiandata = thread_data->endiandata + 20 * i;
-			be32enc( &endiandata[19], n + i );
-		}
-
-		if(use_gpu[0] == 'C')
-			gpu_argon2_raw_hash<cuda::ProcessingUnit>(thread_data);
-		else
-			gpu_argon2_raw_hash<opencl::ProcessingUnit>(thread_data);
-
-		for(int i=0;i<gpu_batch_size;i++) {
-			vhash = thread_data->vhash + 8 * i;
-			if (vhash[7] <= Htarg && fulltest(vhash, ptarget)) {
-				*hashes_done = n - first_nonce;
-				pdata[19] = n;
-				work_set_target_ratio(work, vhash);
-				return 1;
-			}
-			n++;
-		}
-	} while (n < max_nonce && !work_restart[thr_id].restart);
-
-	*hashes_done = n - first_nonce + 1;
-	pdata[19] = n;
-
-	return 0;
-}
-
-int scanhash_argon2d4096_gpu(int thr_id, struct work *work, uint32_t max_nonce,
-							 uint64_t *hashes_done) {
-	argon2_gpu_hasher_thread *thread_data = NULL;
-	uint32_t *vhash;
-	uint32_t *endiandata;
-	argon2_gpu_hashers_mutex.lock();
-	if(argon2_gpu_hashers.find(thr_id) != argon2_gpu_hashers.end()) {
-		thread_data = argon2_gpu_hashers[thr_id];
-	}
-	argon2_gpu_hashers_mutex.unlock();
-
-	uint32_t *pdata = work->data;
-	uint32_t *ptarget = work->target;
-	const uint32_t Htarg = ptarget[7];
-	const uint32_t first_nonce = pdata[19];
-	uint32_t n = first_nonce;
-
-	for(int i=0;i<gpu_batch_size;i++) {
-		endiandata = thread_data->endiandata + 20 * i;
-		for (int j = 0; j < 19; j++)
-			be32enc(&endiandata[j], pdata[j]);
-	}
-
-	do {
-		for(int i=0;i<gpu_batch_size;i++) {
-			endiandata = thread_data->endiandata + 20 * i;
-			be32enc( &endiandata[19], n + i );
-		}
-
-		if(use_gpu[0] == 'C')
-			gpu_argon2_raw_hash<cuda::ProcessingUnit>(thread_data);
-		else
-			gpu_argon2_raw_hash<opencl::ProcessingUnit>(thread_data);
-
-		for(int i=0;i<gpu_batch_size;i++) {
-			vhash = thread_data->vhash + 8 * i;
-			if (vhash[7] < Htarg && fulltest(vhash, ptarget)) {
-				*hashes_done = n - first_nonce + 1;
-				pdata[19] = n;
-				return true;
-			}
-			n++;
-		}
-	} while (n < max_nonce && !work_restart[thr_id].restart);
-
-	*hashes_done = n - first_nonce + 1;
-	pdata[19] = n;
-
-	return 0;
-}
-
-int scanhash_argon2d_crds_gpu(int thr_id, struct work *work, uint32_t max_nonce,
-							 uint64_t *hashes_done) {
-	argon2_gpu_hasher_thread *thread_data = NULL;
-	uint32_t *vhash;
-	uint32_t *endiandata;
-	argon2_gpu_hashers_mutex.lock();
-	if(argon2_gpu_hashers.find(thr_id) != argon2_gpu_hashers.end()) {
-		thread_data = argon2_gpu_hashers[thr_id];
-	}
-	argon2_gpu_hashers_mutex.unlock();
-
-	uint32_t *pdata = work->data;
-	uint32_t *ptarget = work->target;
-	const uint32_t Htarg = ptarget[7];
-	const uint32_t first_nonce = pdata[19];
-	uint32_t n = first_nonce;
-
-	for(int i=0;i<gpu_batch_size;i++) {
-		endiandata = thread_data->endiandata + 20 * i;
-		swab32_array(endiandata, pdata, 20);
-	}
-
-	do {
-		for(int i=0;i<gpu_batch_size;i++) {
-			endiandata = thread_data->endiandata + 20 * i;
-			be32enc( &endiandata[19], n + i );
-		}
-
-		if(use_gpu[0] == 'C')
-			gpu_argon2_raw_hash<cuda::ProcessingUnit>(thread_data);
-		else
-			gpu_argon2_raw_hash<opencl::ProcessingUnit>(thread_data);
-
-		for(int i=0;i<gpu_batch_size;i++) {
-			vhash = thread_data->vhash + 8 * i;
-			if (vhash[7] <= Htarg && fulltest(vhash, ptarget)) {
-				*hashes_done = n - first_nonce;
-				pdata[19] = n;
-				work_set_target_ratio(work, vhash);
-				return 1;
-			}
-			n++;
-		}
-	} while (n < max_nonce && !work_restart[thr_id].restart);
-
-	*hashes_done = n - first_nonce + 1;
-	pdata[19] = n;
-
-	return 0;
+	return thread_data;
 }
 
 template<class GlobalContext>
@@ -298,19 +154,26 @@ int show_gpu_info() {
 	std::cout<<std::endl;
 
 	gpu_device_count = devices.size();
+	if(gpu_device_count > 0)
+		total_threads *= gpu_device_count;
 
 	return gpu_device_count;
 }
 
-bool check_gpu_capability() {
-	if(use_gpu == NULL) {
-		return false;
+int check_gpu_capability(char *_use_gpu, int _gpu_id, int _gpu_batch_size, int threads) {
+	if(_use_gpu == NULL) {
+		return 0;
 	}
+	
+	use_gpu = _use_gpu;
+	gpu_id = _gpu_id;
+	gpu_batch_size = _gpu_batch_size;
+	total_threads = threads;
 
 	if(use_gpu[0] == 'C') {
-		return show_gpu_info<cuda::GlobalContext>() > 0;
+		return show_gpu_info<cuda::GlobalContext>();
 	}
 	else {
-		return show_gpu_info<opencl::GlobalContext>() > 0;
+		return show_gpu_info<opencl::GlobalContext>();
 	}
 }

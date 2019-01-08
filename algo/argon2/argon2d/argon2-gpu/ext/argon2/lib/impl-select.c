@@ -5,10 +5,10 @@
 
 #include "argon2.h"
 
-#define log_maybe(file, args...) \
+#define log_maybe(file, ...) \
     do { \
         if (file) { \
-            fprintf(file, args); \
+            fprintf(file, ##__VA_ARGS__); \
         } \
     } while((void)0, 0)
 

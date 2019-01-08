@@ -12,6 +12,7 @@ set(SOURCE
         api.c
         sysinfos.c
         algo-gate-api.c
+		compat/winansi.c
         crypto/oaes_lib.c
         crypto/c_keccak.c
         crypto/c_groestl.c
@@ -244,7 +245,7 @@ set(SOURCE
         algo/yescrypt/sha256_Y.c
         algo/yescrypt/yescrypt-best.c
         asm/sha2-x64.S asm/scrypt-x64.S asm/aesb-x64.S asm/neoscrypt_asm.S
-        algo/argon2/argon2d/argon2d-gpu-gate.cpp)
+        )
 
 add_executable(multiminer ${SOURCE})
 
@@ -282,21 +283,11 @@ find_package(CURL)
 find_package(Jansson)
 find_package(OpenSSL)
 find_package(GMP)
-find_package(CUDA)
-find_package(OpenCL)
-
-if(CUDA_FOUND)
-    set(HAVE_CUDA 1)
-endif()
-
-if(OpenCL_FOUND)
-    set(HAVE_OPENCL 1)
-endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cpuminer-config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/cpuminer-config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_subdirectory(algo/argon2/argon2d/argon2-gpu)
+add_subdirectory(algo/argon2/argon2d)
 
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CURL_INCLUDE_DIR})
@@ -304,11 +295,10 @@ include_directories(${JANSSON_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${GMP_INCLUDES})
 
-if(CUDA_FOUND)
-    include_directories(${CUDA_INCLUDE_DIRS})
-endif()
-
-target_link_libraries(multiminer argon2-cuda argon2-opencl argon2 -lOpenCL ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+target_link_libraries(multiminer mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+IF (WIN32)
+	target_link_libraries(multiminer -lws2_32)
+ENDIF()
 
 target_compile_options(multiminer PRIVATE -O3 -mtune=native -march=native -I.)
 

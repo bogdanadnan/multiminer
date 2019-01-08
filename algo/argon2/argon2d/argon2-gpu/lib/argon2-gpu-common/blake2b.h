@@ -2,6 +2,7 @@
 #define ARGON2_BLAKE2B_H
 
 #include <cstdint>
+#include <cstddef>
 
 namespace argon2 {
 

@@ -5,6 +5,9 @@
 #include <thread>
 #include <chrono>
 
+#ifdef _WIN64
+#include <windows.h>
+#endif
 
 #include "argon2-cuda/kernels.h"
 #include "argon2-gpu-common/argon2-common.h"
@@ -1445,9 +1448,23 @@ void KernelRunner::synchronize() {
 }
 
 uint64_t KernelRunner::get_time() {
+#ifdef _WIN64
+	FILETIME ft;
+	uint64_t tmpres = 0;
+	static int tzflag;
+
+	GetSystemTimeAsFileTime(&ft);
+
+	tmpres |= ft.dwHighDateTime;
+	tmpres <<= 32;
+	tmpres |= ft.dwLowDateTime;
+
+	return tmpres;
+#else
     timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return t.tv_sec * 1000000000 + t.tv_nsec;
+#endif
 }
 
 } // cuda

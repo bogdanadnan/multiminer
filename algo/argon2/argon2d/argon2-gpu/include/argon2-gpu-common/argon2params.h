@@ -2,6 +2,7 @@
 #define ARGON2_ARGON2PARAMS_H
 
 #include <cstdint>
+#include <cstddef>
 
 #include "argon2-common.h"
 
