@@ -1,12 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(argon2-gpu CXX)
-set(BINARY_INSTALL_DIR /usr/local/bin)
-set(LIBRARY_INSTALL_DIR /usr/local/lib)
-set(INCLUDE_INSTALL_DIR /usr/local/include)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-enable_testing()
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+find_package(OpenCL)
 
 set(CUDA_FOUND FALSE)
 
@@ -24,13 +23,13 @@ endif()
 
 if(CUDA_FOUND)
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};
-        -std=c++11;-O3;--ptxas-options=-v;-arch sm_30;-lineinfo
+        -std=c++11;--compiler-options=-fPIC;-O3;--ptxas-options=-v;-arch sm_30;-lineinfo
     )
 endif()
 
 add_subdirectory(ext/argon2)
 
-add_library(argon2-gpu-common SHARED
+add_library(argon2-gpu-common STATIC
     lib/argon2-gpu-common/argon2params.cpp
     lib/argon2-gpu-common/blake2b.cpp
 )
@@ -46,7 +45,7 @@ target_include_directories(argon2-gpu-common PRIVATE
 include_directories(include)
 
 if(CUDA_FOUND)
-    cuda_add_library(argon2-cuda SHARED
+    cuda_add_library(argon2-cuda STATIC
         lib/argon2-cuda/device.cpp
         lib/argon2-cuda/globalcontext.cpp
         lib/argon2-cuda/programcontext.cpp
@@ -55,7 +54,7 @@ if(CUDA_FOUND)
     )
     include_directories(${CUDA_INCLUDE_DIRS})
 else()
-    add_library(argon2-cuda SHARED
+    add_library(argon2-cuda STATIC
         lib/argon2-cuda/nocuda.cpp)
 endif()
 
@@ -69,7 +68,7 @@ target_include_directories(argon2-cuda INTERFACE
 )
 target_link_libraries(argon2-cuda argon2-gpu-common)
 
-add_library(argon2-opencl SHARED
+add_library(argon2-opencl STATIC
     lib/argon2-opencl/device.cpp
     lib/argon2-opencl/globalcontext.cpp
     lib/argon2-opencl/kernelloader.cpp
@@ -87,27 +86,4 @@ target_include_directories(argon2-opencl PRIVATE
 )
 target_link_libraries(argon2-opencl
     argon2-gpu-common -lOpenCL
-)
-
-install(
-    TARGETS argon2-gpu-common argon2-opencl argon2-cuda
-    DESTINATION ${LIBRARY_INSTALL_DIR}
-)
-install(FILES
-    include/argon2-gpu-common/argon2-common.h
-    include/argon2-gpu-common/argon2params.h
-    include/argon2-opencl/cl.hpp
-    include/argon2-opencl/opencl.h
-    include/argon2-opencl/device.h
-    include/argon2-opencl/globalcontext.h
-    include/argon2-opencl/programcontext.h
-    include/argon2-opencl/processingunit.h
-    include/argon2-opencl/kernelrunner.h
-    include/argon2-cuda/cudaexception.h
-    include/argon2-cuda/kernels.h
-    include/argon2-cuda/device.h
-    include/argon2-cuda/globalcontext.h
-    include/argon2-cuda/programcontext.h
-    include/argon2-cuda/processingunit.h
-    DESTINATION ${INCLUDE_INSTALL_DIR}
 )

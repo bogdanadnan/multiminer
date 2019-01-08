@@ -37,7 +37,7 @@ public:
 #if HAVE_CUDA
     GlobalContext();
 #else
-    GlobalContext() : devices() {}
+	GlobalContext() : devices() { }
 #endif /* HAVE_CUDA */
 };
 

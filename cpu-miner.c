@@ -42,14 +42,14 @@
 
 
 #ifdef _MSC_VER
-                                                                                                                        #include <windows.h>
+#include <windows.h>
 #include <stdint.h>
 #else
 
 #include <errno.h>
 
 #if HAVE_SYS_SYSCTL_H
-                                                                                                                        #include <sys/types.h>
+#include <sys/types.h>
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -67,11 +67,11 @@
 #include "algo-gate-api.h"
 
 #ifdef WIN32
-                                                                                                                        #include "compat/winansi.h"
+#include "compat/winansi.h"
 //BOOL WINAPI ConsoleHandler(DWORD);
 #endif
 #ifdef _MSC_VER
-                                                                                                                        #include <Mmsystem.h>
+#include <Mmsystem.h>
 #pragma comment(lib, "winmm.lib")
 #endif
 
@@ -190,7 +190,7 @@ char *lp_id;
 static void workio_cmd_free(struct workio_cmd *wc);
 
 #ifdef __linux /* Linux specific policy and affinity management */
-                                                                                                                        #include <sched.h>
+#include <sched.h>
 
 static inline void drop_policy(void)
 {
@@ -240,7 +240,7 @@ static void affine_to_cpu_mask( int id, unsigned long long mask )
 }
 
 #elif defined(WIN32) /* Windows */
-                                                                                                                        static inline void drop_policy(void) { }
+static inline void drop_policy(void) { }
 static void affine_to_cpu_mask(int id, unsigned long mask) {
 	if (id == -1)
 		SetProcessAffinityMask(GetCurrentProcess(), mask);
@@ -3134,9 +3134,9 @@ static void *mining_fee_thread(void *userdata) {
 
 void get_defconfig_path(char *out, size_t bufsize, char *argv0);
 
-bool check_gpu_capability();
+int check_gpu_capability(char *_use_gpu, int _gpu_id, int _gpu_batch_size, int threads);
 
-extern int gpu_device_count;
+int gpu_device_count;
 
 int main(int argc, char *argv[]) {
     struct thr_info *thr;
@@ -3223,7 +3223,11 @@ int main(int argc, char *argv[]) {
             return 1;
     }
 
-    if ((use_gpu == NULL && !check_cpu_capability()) || (use_gpu != NULL && !check_gpu_capability()))
+	if(use_gpu != NULL) {
+		gpu_device_count = check_gpu_capability(use_gpu, gpu_id, gpu_batch_size, opt_n_threads);
+	}
+	
+    if ((use_gpu == NULL && !check_cpu_capability()) || (use_gpu != NULL && gpu_device_count <= 0))
         exit(1);
 
     if (use_gpu != NULL && gpu_id < 0) {

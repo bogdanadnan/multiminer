@@ -1,3 +1,7 @@
+#ifdef _WIN64
+#include <windows.h>
+#endif
+
 #include "kernelrunner.h"
 
 #include <stdexcept>
@@ -200,10 +204,24 @@ std::uint64_t KernelRunner::finish()
     return get_time() - timer;
 }
 
-std::uint64_t KernelRunner::get_time() {
-    timespec t;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    return t.tv_sec * 1000000000 + t.tv_nsec;
+uint64_t KernelRunner::get_time() {
+#ifdef _WIN64
+	FILETIME ft;
+	uint64_t tmpres = 0;
+	static int tzflag;
+
+	GetSystemTimeAsFileTime(&ft);
+
+	tmpres |= ft.dwHighDateTime;
+	tmpres <<= 32;
+	tmpres |= ft.dwLowDateTime;
+
+	return tmpres;
+#else
+	timespec t;
+	clock_gettime(CLOCK_MONOTONIC, &t);
+	return t.tv_sec * 1000000000 + t.tv_nsec;
+#endif
 }
 
 void *KernelRunner::getSeedBuffer(int index) {
