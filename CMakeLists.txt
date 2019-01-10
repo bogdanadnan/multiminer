@@ -3,6 +3,11 @@ project (multiminer C ASM CXX)
 set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 
+SET(CMAKE_SKIP_BUILD_RPATH FALSE)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+SET(CMAKE_INSTALL_RPATH "./")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 include(FindJansson.cmake)
 
 set(SOURCE
@@ -12,7 +17,7 @@ set(SOURCE
         api.c
         sysinfos.c
         algo-gate-api.c
-		compat/winansi.c
+        compat/winansi.c
         crypto/oaes_lib.c
         crypto/c_keccak.c
         crypto/c_groestl.c
@@ -307,3 +312,4 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/algo/argon2/argon2d/argon2-gpu/data/kernels/argon2_kernel.cl
                 ${CMAKE_CURRENT_BINARY_DIR}/data/kernels/argon2_kernel.cl)
+
