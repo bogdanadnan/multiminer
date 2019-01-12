@@ -47,7 +47,7 @@ bool init_gpu(int thr_id, Type type, Version version, Argon2Params *params) {
 			ProgramContext *progCtx = new ProgramContext(context, {device}, type, version);
 			argon2_gpu_hasher_thread_data->processing_unit = new ProcessingUnit(progCtx, params, &device, gpu_batch_size, false);
 
-			std::cout << "[Thread " << thr_id << "] Device #" << i << ": " << device.getName()
+			std::cout << "[Thread " << thr_id << "] Device #" << (i + 1) << ": " << device.getName()
 					  << std::endl << std::flush;
 
 			argon2_gpu_hashers[thr_id] = argon2_gpu_hasher_thread_data;
