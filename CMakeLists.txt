@@ -252,8 +252,6 @@ set(SOURCE
         asm/sha2-x64.S asm/scrypt-x64.S asm/aesb-x64.S asm/neoscrypt_asm.S
         )
 
-add_executable(multiminer ${SOURCE})
-
 include(CheckIncludeFiles)
 include(CheckFunctionExists)
 include(CheckPrototypeDefinition)
@@ -300,12 +298,70 @@ include_directories(${JANSSON_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${GMP_INCLUDES})
 
+add_executable(multiminer ${SOURCE})
 target_link_libraries(multiminer mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
 IF (WIN32)
 	target_link_libraries(multiminer -lws2_32)
 ENDIF()
-
 target_compile_options(multiminer PRIVATE -O3 -mtune=native -march=native -I.)
+
+IF (BUILD_ALL_ARCH)
+	add_executable(multiminer-sse2 ${SOURCE})
+	target_link_libraries(multiminer-sse2 mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+	IF (WIN32)
+		target_link_libraries(multiminer-sse2 -lws2_32)
+	ENDIF()
+	target_compile_options(multiminer-sse2 PRIVATE -O3 -msse2 -I.)
+
+	add_executable(multiminer-ssse3 ${SOURCE})
+	target_link_libraries(multiminer-ssse3 mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+	IF (WIN32)
+		target_link_libraries(multiminer-ssse3 -lws2_32)
+	ENDIF()
+	target_compile_options(multiminer-ssse3 PRIVATE -O3 -march=core2 -I.)
+
+	add_executable(multiminer-sse42 ${SOURCE})
+	target_link_libraries(multiminer-sse42 mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+	IF (WIN32)
+		target_link_libraries(multiminer-sse42 -lws2_32)
+	ENDIF()
+	target_compile_options(multiminer-sse42 PRIVATE -O3 -march=corei7 -I.)
+
+	add_executable(multiminer-aes-sse42 ${SOURCE})
+	target_link_libraries(multiminer-aes-sse42 mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+	IF (WIN32)
+		target_link_libraries(multiminer-aes-sse42 -lws2_32)
+	ENDIF()
+	target_compile_options(multiminer-aes-sse42 PRIVATE -O3 -maes -msse4.2 -I.)
+
+	add_executable(multiminer-aes-avx ${SOURCE})
+	target_link_libraries(multiminer-aes-avx mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+	IF (WIN32)
+		target_link_libraries(multiminer-aes-avx -lws2_32)
+	ENDIF()
+	target_compile_options(multiminer-aes-avx PRIVATE -O3 -march=corei7-avx -I.)
+
+	add_executable(multiminer-avx2 ${SOURCE})
+	target_link_libraries(multiminer-avx2 mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+	IF (WIN32)
+		target_link_libraries(multiminer-avx2 -lws2_32)
+	ENDIF()
+	target_compile_options(multiminer-avx2 PRIVATE -O3 -march=core-avx2 -I.)
+
+	add_executable(multiminer-avx512 ${SOURCE})
+	target_link_libraries(multiminer-avx512 mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+	IF (WIN32)
+		target_link_libraries(multiminer-avx512 -lws2_32)
+	ENDIF()
+	target_compile_options(multiminer-avx512 PRIVATE -O3 -march=skylake-avx512 -fno-asynchronous-unwind-tables -I.)
+
+	add_executable(multiminer-avx2-sha ${SOURCE})
+	target_link_libraries(multiminer-avx2-sha mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${GMP_LIBRARIES})
+	IF (WIN32)
+		target_link_libraries(multiminer-avx2-sha -lws2_32)
+	ENDIF()
+	target_compile_options(multiminer-avx2-sha PRIVATE -O3 -march=core-avx2 -I.)
+ENDIF()
 
 add_custom_command(
         TARGET multiminer POST_BUILD
