@@ -15,7 +15,7 @@ multiminer is a fork of cpuminer-opt by Jay D Dee.
 (https://github.com/JayDDee/cpuminer-opt)
 
 I've added support for GPU mining a couple of Argon2D coins:
-Zumy (argon2d250), Dynamic (argon2d500) and Argentum/Unitus (argon2d4096)
+Zumy/Credits (argon2d250), Dynamic (argon2d500) and Argentum/Unitus (argon2d4096)
 
 Miner programs are often flagged as malware by antivirus programs. This is
 a false positive, they are flagged simply because they are cryptocurrency 
