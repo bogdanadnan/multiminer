@@ -28,3 +28,9 @@ include_directories(${CMAKE_SOURCE_DIR})
 target_link_libraries(mm_gpu_gate argon2-cuda argon2-opencl argon2 ${OpenCL_LIBRARIES})
 target_compile_definitions(mm_gpu_gate PRIVATE EXPORT_SYMBOLS=1)
 target_compile_options(mm_gpu_gate PRIVATE -O3 -mtune=native -march=native -I.)
+
+add_custom_command(
+        TARGET mm_gpu_gate POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                "$<TARGET_FILE:mm_gpu_gate>"
+                "${CMAKE_BINARY_DIR}/")

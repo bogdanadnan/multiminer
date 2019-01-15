@@ -15,7 +15,7 @@ multiminer is a fork of cpuminer-opt by Jay D Dee.
 (https://github.com/JayDDee/cpuminer-opt)
 
 I've added support for GPU mining a couple of Argon2D coins:
-Zumy (argon2d250), Dynamic (argon2d500) and Argentum/Unitus (argon2d4096)
+Zumy/Credits (argon2d250), Dynamic (argon2d500) and Argentum/Unitus (argon2d4096)
 
 Miner programs are often flagged as malware by antivirus programs. This is
 a false positive, they are flagged simply because they are cryptocurrency 
@@ -46,10 +46,16 @@ MacOS, OSx and Android are not supported.
 
 3. Stratum pool. Some algos may work wallet mining using getwork or GBT. YMMV.
 
-Building Process
+Windows Binaries
 ---------------
+For Windows, you are lucky :) ... binaries are available in the release section of this
+project.
+https://github.com/bogdanadnan/multiminer/releases
 
-This build instructions are for Ubuntu 18.04 & 16.04. For any other distribution you might
+Linux Building Process
+---------------------
+
+These build instructions are for Ubuntu 18.04 & 16.04. For any other distribution you might
 need to adapt them accordingly (especially CUDA installation). Also keep in mind CUDA
 toolkit installed in the following manner might change your drivers. The miner should
 compile ok without CUDA, case in which it will use only OpenCL. Just skip any CUDA mention
@@ -100,8 +106,6 @@ cmake ..
 make
 ```
 5. You should now have a binary called multiminer in current folder.
-
-For Windows, binaries will be provided soon.
 
 Usage
 -----
