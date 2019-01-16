@@ -6,19 +6,49 @@
 #include "argon2-gpu/include/argon2-cuda/cudaexception.h"
 
 #include <iostream>
+#include <strstream>
 #include <unordered_map>
 #include <mutex>
+#include <vector>
+#include <algorithm>
 
 using namespace argon2;
 
 int gpu_device_count = 0;
 char *use_gpu = NULL;
-int gpu_id = -1;
+std::vector<int> gpu_ids;
 int gpu_batch_size = 1;
 int total_threads = 1;
 
 std::unordered_map<int, argon2_gpu_hasher_thread *> argon2_gpu_hashers;
 std::mutex argon2_gpu_hashers_mutex;
+
+std::vector<int> parse_gpu_id(const std::string &arg) {
+	std::string::size_type pos, lastPos = 0, length = arg.length();
+	std::vector<int> tokens;
+
+	while(lastPos < length + 1)
+	{
+		pos = arg.find_first_of(",", lastPos);
+		if(pos == std::string::npos)
+		{
+			pos = length;
+		}
+
+		if(pos != lastPos) {
+			std::string token = std::string(arg.c_str() + lastPos,
+								  pos - lastPos);
+			int id = atoi(token.c_str()) - 1;
+			if(id >= 0 && std::find(tokens.begin(), tokens.end(), id) == tokens.end())
+				tokens.push_back(id);
+		}
+
+		lastPos = pos + 1;
+	}
+
+	std::sort(tokens.begin(), tokens.end());
+	return tokens;
+}
 
 template<class GlobalContext, class ProgramContext, class ProcessingUnit>
 bool init_gpu(int thr_id, Type type, Version version, Argon2Params *params) {
@@ -28,8 +58,13 @@ bool init_gpu(int thr_id, Type type, Version version, Argon2Params *params) {
 	auto &devices = context->getAllDevices();
 
 	int selected_device = 0;
-	if(gpu_id >= 0) {
-		selected_device = gpu_id;
+	if(gpu_ids.size() > 0) {
+	    int selected_entry = thr_id / (total_threads / gpu_device_count);
+	    if(selected_entry < 0 && selected_entry >= gpu_ids.size()) {
+            argon2_gpu_hashers_mutex.unlock();
+            return false;
+        }
+		selected_device = gpu_ids[selected_entry];
 	}
 	else {
 		selected_device = thr_id / (total_threads / gpu_device_count);
@@ -136,6 +171,14 @@ argon2_gpu_hasher_thread *get_gpu_thread_data(int thr_id) {
 	return thread_data;
 }
 
+std::string join_ids(const std::vector<int> &ids) {
+    std::ostrstream dest;
+    for(int i=0; i < ids.size(); i++) {
+        dest << "#" << (ids[i] + 1) << ((i < (ids.size() - 1)) ? ", " : "");
+    }
+    return dest.str();
+}
+
 template<class GlobalContext>
 int show_gpu_info() {
 	GlobalContext *context = new GlobalContext;
@@ -146,27 +189,48 @@ int show_gpu_info() {
 				  << std::endl;
 
 	}
-	if(gpu_id >= 0)
-		std::cout << "Start mining on device #" << (gpu_id + 1) << "." << std::endl;
+
+	bool gpu_id_set = !gpu_ids.empty();
+
+	for(std::vector<int>::iterator it = gpu_ids.end(); it-- != gpu_ids.begin();) {
+		if(*it < 0 || *it >= devices.size()) // invalid id, remove it
+			gpu_ids.erase(it);
+	}
+
+	if(gpu_id_set && gpu_ids.size() == 0)
+		std::cout << "Invalid GPU id passed in arguments, reverting to use all available devices." << std::endl;
+
+	if(gpu_ids.size() == 0)
+	    std::cout << "Start mining on all devices." << std::endl;
+	else if(gpu_ids.size() == 1)
+		std::cout << "Start mining on device #" << (gpu_ids[0] + 1) << "." << std::endl;
 	else
-		std::cout << "Start mining on all devices." << std::endl;
+        std::cout << "Start mining on devices " << join_ids(gpu_ids) << "." << std::endl;
 
 	std::cout<<std::endl;
 
-	gpu_device_count = devices.size();
+	gpu_device_count = gpu_ids.empty() ? devices.size() : gpu_ids.size();
+
 	if(gpu_device_count > 0)
 		total_threads *= gpu_device_count;
 
 	return gpu_device_count;
 }
 
-int check_gpu_capability(char *_use_gpu, int _gpu_id, int _gpu_batch_size, int threads) {
+int check_gpu_capability(char *_use_gpu, char *_gpu_id, int _gpu_batch_size, int threads) {
 	if(_use_gpu == NULL) {
 		return 0;
 	}
 	
 	use_gpu = _use_gpu;
-	gpu_id = _gpu_id;
+
+	if(_gpu_id != NULL) {
+        gpu_ids = parse_gpu_id(_gpu_id);
+
+        if (strlen(_gpu_id) > 0 && gpu_ids.size() == 0)
+            std::cout << "Invalid GPU id passed in arguments, reverting to use all available devices." << std::endl;
+    }
+
 	gpu_batch_size = _gpu_batch_size;
 	total_threads = threads;
 

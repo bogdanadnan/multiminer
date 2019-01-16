@@ -20,7 +20,7 @@ typedef struct argon2_gpu_hasher_thread_ {
 	uint32_t *endiandata;
 } argon2_gpu_hasher_thread;
 
-DLLEXPORT int check_gpu_capability(char *_use_gpu, int _gpu_id, int _gpu_batch_size, int threads);
+DLLEXPORT int check_gpu_capability(char *_use_gpu, char *_gpu_id, int _gpu_batch_size, int threads);
 DLLEXPORT argon2_gpu_hasher_thread *get_gpu_thread_data(int thr_id);
 DLLEXPORT void gpu_argon2_raw_hash(argon2_gpu_hasher_thread *thread_data);
 DLLEXPORT bool init_thread_argon2d4096_gpu(int thr_id);

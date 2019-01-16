@@ -672,7 +672,7 @@ extern int opt_timeout;
 extern "C" {
 #endif
 extern char *use_gpu;
-extern int gpu_id;
+extern char *gpu_id;
 extern int gpu_batch_size;
 #ifdef __cplusplus
 }
@@ -849,7 +849,8 @@ Options:\n\
 	  --max-rate=N[KMG] Only mine if net hashrate is less than specified value\n\
 	  --max-diff=N      Only mine if net difficulty is less than specified value\n\
 	  --use-gpu=CUDA|OPENCL Use GPU for algorithms supporting it (Argon2d)\n\
-	  --gpu-id=N        Use GPU device with specific index in detected devices - default 1\n\
+	  --gpu-id=N1,N2    Use GPU devices with specific indexes in detected devices\n\
+						  default use all devices\n\
 	  --gpu-batchsize=N Specify batch size - default 1\n\
 	  -c, --config=FILE load a JSON-format configuration file\n\
 	  -V, --version     display version information and exit\n\
