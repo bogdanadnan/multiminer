@@ -224,9 +224,12 @@ int check_gpu_capability(char *_use_gpu, char *_gpu_id, int _gpu_batch_size, int
 	
 	use_gpu = _use_gpu;
 
-	gpu_ids = parse_gpu_id(_gpu_id);
-	if(_gpu_id != NULL && strlen(_gpu_id) > 0 && gpu_ids.size() == 0)
-		std::cout << "Invalid GPU id passed in arguments, reverting to use all available devices." << std::endl;
+	if(_gpu_id != NULL) {
+        gpu_ids = parse_gpu_id(_gpu_id);
+
+        if (strlen(_gpu_id) > 0 && gpu_ids.size() == 0)
+            std::cout << "Invalid GPU id passed in arguments, reverting to use all available devices." << std::endl;
+    }
 
 	gpu_batch_size = _gpu_batch_size;
 	total_threads = threads;
