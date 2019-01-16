@@ -201,11 +201,11 @@ int show_gpu_info() {
 		std::cout << "Invalid GPU id passed in arguments, reverting to use all available devices." << std::endl;
 
 	if(gpu_ids.size() == 0)
-	        std::cout << "Start mining on all devices." << std::endl;
+	    std::cout << "Start mining on all devices." << std::endl;
 	else if(gpu_ids.size() == 1)
 		std::cout << "Start mining on device #" << (gpu_ids[0] + 1) << "." << std::endl;
 	else
-        	std::cout << "Start mining on devices " << join_ids(gpu_ids) << "." << std::endl;
+        std::cout << "Start mining on devices " << join_ids(gpu_ids) << "." << std::endl;
 
 	std::cout<<std::endl;
 
