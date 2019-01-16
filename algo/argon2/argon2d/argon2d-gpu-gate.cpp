@@ -6,23 +6,26 @@
 #include "argon2-gpu/include/argon2-cuda/cudaexception.h"
 
 #include <iostream>
+#include <strstream>
 #include <unordered_map>
 #include <mutex>
+#include <vector>
+#include <algorithm>
 
 using namespace argon2;
 
 int gpu_device_count = 0;
 char *use_gpu = NULL;
-vector<int> gpu_ids;
+std::vector<int> gpu_ids;
 int gpu_batch_size = 1;
 int total_threads = 1;
 
 std::unordered_map<int, argon2_gpu_hasher_thread *> argon2_gpu_hashers;
 std::mutex argon2_gpu_hashers_mutex;
 
-vector<int> parse_gpu_id(const string &arg) {
-	string::size_type pos, lastPos = 0, length = arg.length();
-	vector<int> tokens;
+std::vector<int> parse_gpu_id(const std::string &arg) {
+	std::string::size_type pos, lastPos = 0, length = arg.length();
+	std::vector<int> tokens;
 
 	while(lastPos < length + 1)
 	{
@@ -33,10 +36,10 @@ vector<int> parse_gpu_id(const string &arg) {
 		}
 
 		if(pos != lastPos) {
-			string token = string(arg.c_str() + lastPos,
+			std::string token = std::string(arg.c_str() + lastPos,
 								  pos - lastPos);
 			int id = atoi(token.c_str()) - 1;
-			if(id >= 0 && find(tokens.begin(), tokens.end(), id) == tokens.end())
+			if(id >= 0 && std::find(tokens.begin(), tokens.end(), id) == tokens.end())
 				tokens.push_back(id);
 		}
 
@@ -167,8 +170,8 @@ argon2_gpu_hasher_thread *get_gpu_thread_data(int thr_id) {
 	return thread_data;
 }
 
-string join_ids(const vector<int> &ids) {
-    ostrstream dest;
+std::string join_ids(const std::vector<int> &ids) {
+    std::ostrstream dest;
     for(int i=0; i < ids.size(); i++) {
         dest << "#" << ids[i] << ((i < (ids.size() - 1)) ? ", " : "");
     }
@@ -188,20 +191,20 @@ int show_gpu_info() {
 
 	bool gpu_id_set = !gpu_ids.empty();
 
-	for(vector<int>::iterator it = gpu_ids.end(); it-- != gpu_ids.begin();) {
-		if(*id < 0 || *it >= devices.size()) // invalid id, remove it
-			gpu_ids.remove(it);
+	for(std::vector<int>::iterator it = gpu_ids.end(); it-- != gpu_ids.begin();) {
+		if(*it < 0 || *it >= devices.size()) // invalid id, remove it
+			gpu_ids.erase(it);
 	}
 
 	if(gpu_id_set && gpu_ids.size() == 0)
 		std::cout << "Invalid GPU id passed in arguments, reverting to use all available devices." << std::endl;
 
 	if(gpu_ids.size() == 0)
-        std::cout << "Start mining on all devices." << std::endl;
+	        std::cout << "Start mining on all devices." << std::endl;
 	else if(gpu_ids.size() == 1)
 		std::cout << "Start mining on device #" << (gpu_ids[0] + 1) << "." << std::endl;
 	else
-        std::cout << "Start mining on devices " << join_ids(gpu_ids) << "." << std::endl;
+        	std::cout << "Start mining on devices " << join_ids(gpu_ids) << "." << std::endl;
 
 	std::cout<<std::endl;
 
