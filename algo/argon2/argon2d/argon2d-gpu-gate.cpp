@@ -46,6 +46,7 @@ std::vector<int> parse_gpu_id(const std::string &arg) {
 		lastPos = pos + 1;
 	}
 
+	std::sort(tokens.begin(), tokens.end());
 	return tokens;
 }
 
@@ -173,7 +174,7 @@ argon2_gpu_hasher_thread *get_gpu_thread_data(int thr_id) {
 std::string join_ids(const std::vector<int> &ids) {
     std::ostrstream dest;
     for(int i=0; i < ids.size(); i++) {
-        dest << "#" << ids[i] << ((i < (ids.size() - 1)) ? ", " : "");
+        dest << "#" << (ids[i] + 1) << ((i < (ids.size() - 1)) ? ", " : "");
     }
     return dest.str();
 }
