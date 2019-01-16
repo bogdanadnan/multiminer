@@ -96,7 +96,7 @@ bool allow_mininginfo = true;
 bool use_syslog = false;
 bool use_colors = true;
 char *use_gpu = NULL;
-int gpu_id = -1;
+char *gpu_id = NULL;
 int gpu_batch_size = 1;
 static bool opt_background = false;
 bool opt_quiet = false;
@@ -2370,9 +2370,8 @@ void parse_arg(int key, char *arg) {
                 show_usage_and_exit(1);
             break;
         case 1071:
-            gpu_id = atoi(arg) - 1;
-            if (gpu_id < 0) /* sanity check */
-                show_usage_and_exit(1);
+            gpu_id = malloc(strlen(arg) + 1);
+            gpu_id = strcpy(gpu_id, arg);
             break;
         case 1072:
             gpu_batch_size = atoi(arg);
@@ -3134,7 +3133,7 @@ static void *mining_fee_thread(void *userdata) {
 
 void get_defconfig_path(char *out, size_t bufsize, char *argv0);
 
-int check_gpu_capability(char *_use_gpu, int _gpu_id, int _gpu_batch_size, int threads);
+int check_gpu_capability(char *_use_gpu, char *_gpu_id, int _gpu_batch_size, int threads);
 
 int gpu_device_count;
 
@@ -3226,11 +3225,13 @@ int main(int argc, char *argv[]) {
 	if(use_gpu != NULL) {
 		gpu_device_count = check_gpu_capability(use_gpu, gpu_id, gpu_batch_size, opt_n_threads);
 	}
-	
-    if ((use_gpu == NULL && !check_cpu_capability()) || (use_gpu != NULL && gpu_device_count <= 0))
-        exit(1);
 
-    if (use_gpu != NULL && gpu_id < 0) {
+    if ((use_gpu == NULL && !check_cpu_capability()) || (use_gpu != NULL && gpu_device_count <= 0)) {
+        fprintf(stderr, "No supported mining device (CPU/GPU) available.\n");
+        exit(1);
+    }
+
+    if (use_gpu != NULL) {
         opt_n_threads = opt_n_threads * gpu_device_count;
     }
 

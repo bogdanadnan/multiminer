@@ -672,7 +672,7 @@ extern int opt_timeout;
 extern "C" {
 #endif
 extern char *use_gpu;
-extern int gpu_id;
+extern char *gpu_id;
 extern int gpu_batch_size;
 #ifdef __cplusplus
 }
