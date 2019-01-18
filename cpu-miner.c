@@ -3087,6 +3087,14 @@ void switch_pool(pool_connection_data *pool) {
     rpc_userpass = (char *) malloc(strlen(rpc_user) + strlen(rpc_pass) + 2);
     if (rpc_userpass)
         sprintf(rpc_userpass, "%s:%s", rpc_user, rpc_pass);
+
+    if (strcmp(stratum.url, rpc_url)) {
+        free(stratum.url);
+        stratum.url = strdup(rpc_url);
+        applog(LOG_BLUE, "Connection changed to %s", short_url);
+    } else if (!opt_quiet)
+        applog(LOG_DEBUG, "Stratum connection reset");
+
     pthread_mutex_unlock(&g_work_lock);
 
     stratum_need_reset = true;
