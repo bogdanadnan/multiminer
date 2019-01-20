@@ -61,8 +61,8 @@ __device__ __forceinline__ void blake2b_compress(uint64_t *h, uint64_t *m, uint6
     v2 = blake2b_IV[thr_id];
     v3 = blake2b_IV[thr_id + 4];
 
-    if(thr_id == 0) v3 ^= h8;
-    if(thr_id == 1) v3 ^= h9;
+    if(thr_id == 0) v3 ^= h[8];
+    if(thr_id == 1) v3 ^= h[9];
     if(thr_id == 2) v3 ^= f0;
 
     ROUND(m, thr_id, 0);
@@ -103,10 +103,11 @@ __device__ __forceinline__ void blake2b_incrementCounter(uint64_t *h, int inc)
 
 __device__ __forceinline__ size_t blake2b_update(uint32_t *in, int in_len, uint64_t *h, uint32_t *buf, int buf_len, int thr_id)
 {
+    uint32_t *cursor_in = in;
+    uint32_t *cursor_out = buf + buf_len;
+    
     if (buf_len + in_len > BLOCK_BYTES) {
         int left = BLOCK_BYTES - buf_len;
-        uint32_t *cursor_in = in;
-        uint32_t *cursor_out = buf + buf_len;
 
         for(int i=0; i < (left >> 2); i++, cursor_in += 4, cursor_out += 4) {
             cursor_out[thr_id] = cursor_in[thr_id];
@@ -178,7 +179,7 @@ __device__ __forceinline__ void blake2b_final(uint32_t *out, int out_len, uint64
 
     blake2b_compress(h, (uint64_t*)buf, 0xFFFFFFFFFFFFFFFF, thr_id);
 
-    uint32_t *cursor_in = (uint32_t)h;
+    uint32_t *cursor_in = (uint32_t *)h;
     cursor_out = out;
 
     for(int i=0; i < (out_len >> 2); i++, cursor_in += 4, cursor_out += 4) {
@@ -186,7 +187,7 @@ __device__ __forceinline__ void blake2b_final(uint32_t *out, int out_len, uint64
     }
 
     if(thr_id == 0) {
-        for (int i = 0; i < (in_len % 4); i++) {
+        for (int i = 0; i < (out_len % 4); i++) {
             cursor_out[i] = cursor_in[i];
         }
     }
