@@ -877,7 +877,7 @@ __global__ void argon2_kernel_preseed(
 
 	initHash[ARGON2_PREHASH_DIGEST_LENGTH] = idx;
 	initHash[ARGON2_PREHASH_DIGEST_LENGTH + 1] = lane;
-	blake2b_digestLong((uint32_t*)(memory + lane + idx * lanes)->data, ARGON2_DWORDS_IN_BLOCK, initHash, ARGON2_PREHASH_SEED_LENGTH, thr_id);
+	blake2b_digestLong((uint32_t*)(memory + lane + idx * lanes)->data, ARGON2_DWORDS_IN_BLOCK, initHash, ARGON2_PREHASH_SEED_LENGTH, thr_id, lane_thr);
 }
 
 __global__ void argon2_kernel_finalize(
@@ -899,7 +899,7 @@ __global__ void argon2_kernel_finalize(
 	}
 
 	if(thread / 4 == 0) {
-		blake2b_digestLong(out, outLen, (uint32_t *) dst, ARGON2_DWORDS_IN_BLOCK, thread);
+		blake2b_digestLong(out, outLen, (uint32_t *) dst, ARGON2_DWORDS_IN_BLOCK, thread, 1);
 	}
 }
 
@@ -1189,12 +1189,12 @@ void KernelRunner::runKernelOneshot(uint32_t lanesPerBlock,
 
 void KernelRunner::runKernelPreseed() {
 	struct block_g *memory_blocks = (struct block_g *)memory;
-	argon2_kernel_preseed<<<batchSize, lanes * 8>>>(memory_blocks, (uint32_t *)seed, lanes, segmentBlocks);
+	argon2_kernel_preseed<<<batchSize, lanes * 8, lanes * 2 * BLAKE_SHARED_MEM>>>(memory_blocks, (uint32_t *)seed, lanes, segmentBlocks);
 }
 
 void KernelRunner::runKernelFinalize() {
 	struct block_g *memory_blocks = (struct block_g *)memory;
-	argon2_kernel_finalize<<<batchSize, 32>>>(memory_blocks, (uint32_t *)out, outLen / 4, lanes, segmentBlocks);
+	argon2_kernel_finalize<<<batchSize, 32, BLAKE_SHARED_MEM>>>(memory_blocks, (uint32_t *)out, outLen / 4, lanes, segmentBlocks);
 }
 
 void KernelRunner::run(uint32_t lanesPerBlock, uint32_t jobsPerBlock)

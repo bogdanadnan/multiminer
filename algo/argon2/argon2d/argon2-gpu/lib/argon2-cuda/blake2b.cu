@@ -1,5 +1,6 @@
 #define BLOCK_BYTES	32
 #define OUT_BYTES	16
+#define BLAKE_SHARED_MEM    272
 
 #define G(m, r, i, a, b, c, d) \
 do { \
@@ -183,7 +184,7 @@ __device__ __forceinline__ void blake2b_final(uint32_t *out, int out_len, uint64
     cursor_out = out;
 
     for(int i=0; i < (out_len >> 2); i++, cursor_in += 4, cursor_out += 4) {
-        cursor_out[i] = cursor_in[i];
+        cursor_out[thr_id] = cursor_in[thr_id];
     }
 
     if(thr_id == 0) {
@@ -195,10 +196,13 @@ __device__ __forceinline__ void blake2b_final(uint32_t *out, int out_len, uint64
 
 __device__ void blake2b_digestLong(uint32_t *out, int out_len,
                                     uint32_t *in, int in_len,
-                                    int thr_id)
+                                    int thr_id, int blake_id)
 {
-    __shared__ uint64_t h[10];
-    __shared__ uint32_t buf[BLOCK_BYTES];
+    extern __shared__ uint32_t shared[];
+
+    uint64_t *h = (uint64_t*)&shared[blake_id * 68];
+    uint32_t *buf = (uint32_t*)&h[10];
+    uint32_t *out_buffer = &buf[32];
     int buf_len;
 
     if(thr_id == 0) buf[0] = (out_len * 4);
@@ -209,7 +213,6 @@ __device__ void blake2b_digestLong(uint32_t *out, int out_len,
 		buf_len = blake2b_update(in, in_len, h, buf, buf_len, thr_id);
 		blake2b_final(out, out_len, h, buf, buf_len, thr_id);
 	} else {
-		__shared__ uint32_t out_buffer[OUT_BYTES];
         uint32_t *cursor_in = out_buffer;
         uint32_t *cursor_out = out;
 
@@ -218,7 +221,7 @@ __device__ void blake2b_digestLong(uint32_t *out, int out_len,
         blake2b_final(out_buffer, OUT_BYTES, h, buf, buf_len, thr_id);
 
 		for(int i=0; i < (OUT_BYTES / 8); i++, cursor_in += 4, cursor_out += 4) {
-            cursor_out[i] = cursor_in[i];
+            cursor_out[thr_id] = cursor_in[thr_id];
 		}
 
 		out += OUT_BYTES / 2;
@@ -230,8 +233,9 @@ __device__ void blake2b_digestLong(uint32_t *out, int out_len,
             blake2b_final(out_buffer, OUT_BYTES, h, buf, buf_len, thr_id);
 
             cursor_out = out;
+            cursor_in = out_buffer;
             for(int i=0; i < (OUT_BYTES / 8); i++, cursor_in += 4, cursor_out += 4) {
-                cursor_out[i] = cursor_in[i];
+                cursor_out[thr_id] = cursor_in[thr_id];
             }
 
 			out += OUT_BYTES / 2;
