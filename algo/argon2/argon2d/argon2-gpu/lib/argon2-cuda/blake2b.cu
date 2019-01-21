@@ -102,11 +102,11 @@ __device__ __forceinline__ void blake2b_incrementCounter(uint64_t *h, int inc)
     h[9] += (h[8] < (inc * 4));
 }
 
-__device__ __forceinline__ size_t blake2b_update(uint32_t *in, int in_len, uint64_t *h, uint32_t *buf, int buf_len, int thr_id)
+__device__ __forceinline__ int blake2b_update(uint32_t *in, int in_len, uint64_t *h, uint32_t *buf, int buf_len, int thr_id)
 {
     uint32_t *cursor_in = in;
     uint32_t *cursor_out = buf + buf_len;
-    
+
     if (buf_len + in_len > BLOCK_BYTES) {
         int left = BLOCK_BYTES - buf_len;
 

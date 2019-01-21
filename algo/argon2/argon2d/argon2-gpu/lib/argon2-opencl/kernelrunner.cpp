@@ -170,8 +170,11 @@ void KernelRunner::run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
         throw std::logic_error("Invalid jobsPerBlock!");
     }
 
+    std::size_t shmemSizePreseed = lanes * 2 * 400;
+
+    kpreseed.setArg<cl::LocalSpaceArg>(4, { shmemSizePreseed });
     queue.enqueueNDRangeKernel(kpreseed, cl::NullRange,
-                               cl::NDRange(2 * lanes, batchSize), cl::NDRange(2 * lanes, 1));
+                               cl::NDRange(8 * lanes, batchSize), cl::NDRange(8 * lanes, 1));
 
     cl::NDRange globalRange { THREADS_PER_LANE * lanes, batchSize };
     cl::NDRange localRange { THREADS_PER_LANE * lanesPerBlock, jobsPerBlock };
@@ -194,6 +197,9 @@ void KernelRunner::run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
                                    globalRange, localRange);
     }
 
+    std::size_t shmemSizeFinalize = 400;
+
+    kfinalize.setArg<cl::LocalSpaceArg>(5, { shmemSizeFinalize });
     queue.enqueueNDRangeKernel(kfinalize, cl::NullRange,
                                cl::NDRange(THREADS_PER_LANE, batchSize), cl::NDRange(THREADS_PER_LANE, 1));
 }
