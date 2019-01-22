@@ -236,17 +236,10 @@ int scanhash_argon2d_dyn_gpu(int thr_id, struct work *work, uint32_t max_nonce,
 	const uint32_t first_nonce = pdata[19];
 	uint32_t n = first_nonce;
 
-	for(int i=0;i<gpu_batch_size;i++) {
-		endiandata = thread_data->endiandata + 20 * i;
-		swab32_array(endiandata, pdata, 20);
-	}
+	swab32_array(thread_data->endiandata, pdata, 20);
 
 	do {
-		for(int i=0;i<gpu_batch_size;i++) {
-			endiandata = thread_data->endiandata + 20 * i;
-			be32enc( &endiandata[19], n + i );
-		}
-
+		thread_data->endiandata[19] = n;
 		gpu_argon2_raw_hash(thread_data);
 
 		for(int i=0;i<gpu_batch_size;i++) {
@@ -279,18 +272,10 @@ int scanhash_argon2d4096_gpu(int thr_id, struct work *work, uint32_t max_nonce,
 	const uint32_t first_nonce = pdata[19];
 	uint32_t n = first_nonce;
 
-	for(int i=0;i<gpu_batch_size;i++) {
-		endiandata = thread_data->endiandata + 20 * i;
-		for (int j = 0; j < 19; j++)
-			be32enc(&endiandata[j], pdata[j]);
-	}
+	swab32_array(thread_data->endiandata, pdata, 20);
 
 	do {
-		for(int i=0;i<gpu_batch_size;i++) {
-			endiandata = thread_data->endiandata + 20 * i;
-			be32enc( &endiandata[19], n + i );
-		}
-
+		thread_data->endiandata[19] = n;
 		gpu_argon2_raw_hash(thread_data);
 
 		for(int i=0;i<gpu_batch_size;i++) {
@@ -298,7 +283,7 @@ int scanhash_argon2d4096_gpu(int thr_id, struct work *work, uint32_t max_nonce,
 			if (vhash[7] < Htarg && fulltest(vhash, ptarget)) {
 				*hashes_done = n - first_nonce + 1;
 				pdata[19] = n;
-				return true;
+				return 1;
 			}
 			n++;
 		}
@@ -322,17 +307,10 @@ int scanhash_argon2d_crds_gpu(int thr_id, struct work *work, uint32_t max_nonce,
 	const uint32_t first_nonce = pdata[19];
 	uint32_t n = first_nonce;
 
-	for(int i=0;i<gpu_batch_size;i++) {
-		endiandata = thread_data->endiandata + 20 * i;
-		swab32_array(endiandata, pdata, 20);
-	}
+	swab32_array(thread_data->endiandata, pdata, 20);
 
 	do {
-		for(int i=0;i<gpu_batch_size;i++) {
-			endiandata = thread_data->endiandata + 20 * i;
-			be32enc( &endiandata[19], n + i );
-		}
-
+		thread_data->endiandata[19] = n;
 		gpu_argon2_raw_hash(thread_data);
 
 		for(int i=0;i<gpu_batch_size;i++) {

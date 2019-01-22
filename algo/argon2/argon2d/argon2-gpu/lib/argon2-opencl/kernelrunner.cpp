@@ -2,6 +2,7 @@
 #include <windows.h>
 #endif
 
+#include "argon2-gpu-common/argon2-common.h"
 #include "kernelrunner.h"
 
 #include <stdexcept>
@@ -84,10 +85,10 @@ KernelRunner::KernelRunner(const ProgramContext *programContext,
     kfinalize = cl::Kernel(programContext->getProgram(),
                          "argon2_kernel_finalize");
 
-    kpreseed.setArg<cl::Buffer>(0, memoryBuffer);
-    kpreseed.setArg<cl::Buffer>(1, seedBuffer);
-    kpreseed.setArg<cl_uint>(2, lanes);
-    kpreseed.setArg<cl_uint>(3, segmentBlocks);
+    kpreseed.setArg<cl::Buffer>(1, memoryBuffer);
+    kpreseed.setArg<cl::Buffer>(2, seedBuffer);
+    kpreseed.setArg<cl_uint>(3, lanes);
+    kpreseed.setArg<cl_uint>(4, segmentBlocks);
 
     kworker.setArg<cl::Buffer>(1, memoryBuffer);
     if (precompute) {
@@ -136,10 +137,15 @@ void KernelRunner::precomputeRefs()
     queue.finish();
 }
 
-void KernelRunner::mapMemory()
+void KernelRunner::mapMemory(CoinAlgo algo)
 {
-    seedHost = queue.enqueueMapBuffer(seedBuffer, true, CL_MAP_WRITE,
+	if(algo == None)
+	    seedHost = queue.enqueueMapBuffer(seedBuffer, true, CL_MAP_WRITE,
                                       0, batchSize * ARGON2_PREHASH_DIGEST_LENGTH);
+	else
+		seedHost = queue.enqueueMapBuffer(seedBuffer, true, CL_MAP_WRITE,
+										  0, 80);
+
     outHost = queue.enqueueMapBuffer(outBuffer, true, CL_MAP_READ,
                                       0, batchSize * outLen);
 }
@@ -150,7 +156,7 @@ void KernelRunner::unmapMemory()
     queue.enqueueUnmapMemObject(outBuffer, outHost);
 }
 
-void KernelRunner::run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
+void KernelRunner::run(CoinAlgo algo, std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
 {
     timer = get_time();
     std::uint32_t lanes = params->getLanes();
@@ -170,9 +176,10 @@ void KernelRunner::run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
         throw std::logic_error("Invalid jobsPerBlock!");
     }
 
-    std::size_t shmemSizePreseed = lanes * 2 * 400;
+    std::size_t shmemSizePreseed = lanes * 2 * 480;
 
-    kpreseed.setArg<cl::LocalSpaceArg>(4, { shmemSizePreseed });
+    kpreseed.setArg<cl_uint>(0, algo);
+    kpreseed.setArg<cl::LocalSpaceArg>(5, { shmemSizePreseed });
     queue.enqueueNDRangeKernel(kpreseed, cl::NullRange,
                                cl::NDRange(8 * lanes, batchSize), cl::NDRange(8 * lanes, 1));
 
@@ -197,7 +204,7 @@ void KernelRunner::run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
                                    globalRange, localRange);
     }
 
-    std::size_t shmemSizeFinalize = 400;
+    std::size_t shmemSizeFinalize = 480;
 
     kfinalize.setArg<cl::LocalSpaceArg>(5, { shmemSizeFinalize });
     queue.enqueueNDRangeKernel(kfinalize, cl::NullRange,

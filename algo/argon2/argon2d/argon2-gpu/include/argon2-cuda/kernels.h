@@ -41,7 +41,7 @@ private:
     void runKernelOneshot(std::uint32_t lanesPerBlock,
                           std::uint32_t jobsPerBlock);
 
-	void runKernelPreseed();
+	void runKernelPreseed(CoinAlgo algo);
 	void runKernelFinalize();
 
     void synchronize();
@@ -66,10 +66,10 @@ public:
                  bool bySegment, bool precompute);
     ~KernelRunner();
 
-    void writeInputMemory();
+    void writeInputMemory(CoinAlgo algo);
     void readOutputMemory();
 
-    void run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock);
+    void run(CoinAlgo algo, std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock);
     uint64_t finish();
 };
 

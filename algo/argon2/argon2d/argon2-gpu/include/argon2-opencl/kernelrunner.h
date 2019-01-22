@@ -46,10 +46,10 @@ public:
                  const Argon2Params *params, const Device *device,
                  std::size_t batchSize, std::size_t outLen, bool bySegment, bool precompute);
 
-	void mapMemory();
+	void mapMemory(CoinAlgo algo);
 	void unmapMemory();
 
-    void run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock);
+    void run(CoinAlgo algo, std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock);
     uint64_t finish();
 };
 

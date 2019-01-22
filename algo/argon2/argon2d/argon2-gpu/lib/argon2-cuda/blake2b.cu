@@ -1,6 +1,6 @@
 #define BLOCK_BYTES	32
 #define OUT_BYTES	16
-#define BLAKE_SHARED_MEM    272
+#define BLAKE_SHARED_MEM    352
 
 #define G(m, r, i, a, b, c, d) \
 do { \
@@ -196,11 +196,9 @@ __device__ __forceinline__ void blake2b_final(uint32_t *out, int out_len, uint64
 
 __device__ void blake2b_digestLong(uint32_t *out, int out_len,
                                     uint32_t *in, int in_len,
-                                    int thr_id, int blake_id)
+                                    int thr_id, uint32_t *shared)
 {
-    extern __shared__ uint32_t shared[];
-
-    uint64_t *h = (uint64_t*)&shared[blake_id * 68];
+    uint64_t *h = (uint64_t*)shared;
     uint32_t *buf = (uint32_t*)&h[10];
     uint32_t *out_buffer = &buf[32];
     int buf_len;

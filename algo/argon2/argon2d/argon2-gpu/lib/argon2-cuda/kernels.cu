@@ -9,8 +9,8 @@
 #include <windows.h>
 #endif
 
-#include "argon2-cuda/kernels.h"
 #include "argon2-gpu-common/argon2-common.h"
+#include "argon2-cuda/kernels.h"
 
 #include "argon2-cuda/cudaexception.h"
 
@@ -858,30 +858,98 @@ __global__ void argon2_kernel_oneshot(
     }
 }
 
+__device__ __forceinline__ void argon2_genseed_generic(uint32_t *initHash, uint32_t *seed, int job_id, int thr_id) {
+	uint32_t *seed_local = seed + job_id * ARGON2_PREHASH_DIGEST_LENGTH;
+
+	for (int i = 0; i < ARGON2_PREHASH_DIGEST_LENGTH / 4; i++) {
+		initHash[i * 4 + thr_id] = seed_local[i * 4 + thr_id];
+	}
+}
+
+__device__ __forceinline__ void argon2_genseed_crds_dyn_arg(uint32_t *initHash, uint32_t *seed,
+		int lanes, int m_cost, int t_cost, int version, int job_id, int thr_id) {
+	uint64_t *h = (uint64_t*)&initHash[20];
+	uint32_t *buf = (uint32_t*)&h[10];
+	uint32_t *value = &buf[32];
+
+	for (int i = 0; i < 5; i++) {
+		initHash[i * 4 + thr_id] = seed[i * 4 + thr_id];
+	}
+
+	if (thr_id == 3) {
+		uint32_t x = seed[19] + job_id;
+		uint8_t *p = (uint8_t *) &initHash[19];
+		p[3] = x & 0xff;
+		p[2] = (x >> 8) & 0xff;
+		p[1] = (x >> 16) & 0xff;
+		p[0] = (x >> 24) & 0xff;
+	}
+
+	int buf_len = blake2b_init(h, ARGON2_PREHASH_DIGEST_LENGTH, thr_id);
+	*value = lanes; //lanes
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	*value = 32; //outlen
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	*value = m_cost; //m_cost
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	*value = t_cost; //t_cost
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	*value = version; //version
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	*value = ARGON2_D; //type
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	*value = 80; //pw_len
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	buf_len = blake2b_update(initHash, 20, h, buf, buf_len, thr_id);
+	*value = 80; //salt_len
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	buf_len = blake2b_update(initHash, 20, h, buf, buf_len, thr_id);
+	*value = 0; //secret_len
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	buf_len = blake2b_update(NULL, 0, h, buf, buf_len, thr_id);
+	*value = 0; //ad_len
+	buf_len = blake2b_update(value, 1, h, buf, buf_len, thr_id);
+	buf_len = blake2b_update(NULL, 0, h, buf, buf_len, thr_id);
+
+	blake2b_final(initHash, ARGON2_PREHASH_DIGEST_LENGTH, h, buf, buf_len, thr_id);
+}
+
 __global__ void argon2_kernel_preseed(
-		struct block_g *memory, uint32_t *seed, uint32_t lanes, uint32_t segment_blocks) {
-	int job_id = blockIdx.x;
+		uint32_t algo, struct block_g *memory, uint32_t *seed, uint32_t lanes, uint32_t segment_blocks) {
+    int job_id = blockIdx.x;
 	int lane_thr = threadIdx.x / 4;
 	int thr_id = threadIdx.x % 4;
 	int lane = lane_thr % lanes;
 	int idx = lane_thr / lanes;
 
-	/* select job's memory region: */
-	memory += job_id * lanes * ARGON2_SYNC_POINTS * segment_blocks;
-	seed += job_id * ARGON2_PREHASH_DIGEST_LENGTH;
+    extern __shared__ uint32_t shared[];
 
-	uint32_t initHash[ARGON2_PREHASH_SEED_LENGTH];
-	for(int i=0;i<ARGON2_PREHASH_DIGEST_LENGTH;i++) {
-		initHash[i] = seed[i];
+    uint32_t *initHash = &shared[lane_thr * 88];
+
+    if(algo == 1) // Crds
+		argon2_genseed_crds_dyn_arg(initHash, seed, lanes, 250, 1, ARGON2_VERSION_10, job_id, thr_id);
+    else if(algo == 2) // Dyn
+		argon2_genseed_crds_dyn_arg(initHash, seed, lanes, 500, 2, ARGON2_VERSION_10, job_id, thr_id);
+    else if(algo == 3) // Arg
+		argon2_genseed_crds_dyn_arg(initHash, seed, lanes, 4096, 1, ARGON2_VERSION_13, job_id, thr_id);
+	else
+		argon2_genseed_generic(initHash, seed, job_id, thr_id);
+
+	if (thr_id == 0) {
+		initHash[ARGON2_PREHASH_DIGEST_LENGTH] = idx;
+		initHash[ARGON2_PREHASH_DIGEST_LENGTH + 1] = lane;
 	}
 
-	initHash[ARGON2_PREHASH_DIGEST_LENGTH] = idx;
-	initHash[ARGON2_PREHASH_DIGEST_LENGTH + 1] = lane;
-	blake2b_digestLong((uint32_t*)(memory + lane + idx * lanes)->data, ARGON2_DWORDS_IN_BLOCK, initHash, ARGON2_PREHASH_SEED_LENGTH, thr_id, lane_thr);
+    /* select job's memory region: */
+    memory += job_id * lanes * ARGON2_SYNC_POINTS * segment_blocks;
+
+	blake2b_digestLong((uint32_t*)(memory + lane + idx * lanes)->data, ARGON2_DWORDS_IN_BLOCK, initHash, ARGON2_PREHASH_SEED_LENGTH, thr_id, &initHash[20]);
 }
 
 __global__ void argon2_kernel_finalize(
 		struct block_g *memory, uint32_t *out, uint32_t outLen, uint32_t lanes, uint32_t segment_blocks) {
+    extern __shared__ uint32_t shared[];
+
 	int job_id = blockIdx.x;
 	int thread = threadIdx.x;
 
@@ -899,7 +967,7 @@ __global__ void argon2_kernel_finalize(
 	}
 
 	if(thread / 4 == 0) {
-		blake2b_digestLong(out, outLen, (uint32_t *) dst, ARGON2_DWORDS_IN_BLOCK, thread, 1);
+		blake2b_digestLong(out, outLen, (uint32_t *) dst, ARGON2_DWORDS_IN_BLOCK, thread, shared);
 	}
 }
 
@@ -930,7 +998,7 @@ KernelRunner::KernelRunner(uint32_t type, uint32_t version, uint32_t passes,
     CudaException::check(cudaMalloc(&memory, memorySize));
     CudaException::check(cudaMalloc(&seed, batchSize * ARGON2_PREHASH_DIGEST_LENGTH * sizeof(uint32_t)));
     CudaException::check(cudaMalloc(&out, batchSize * outLen));
-    CudaException::check(cudaMallocHost(&seed_host, batchSize * lanes * 2 * ARGON2_BLOCK_SIZE));
+    CudaException::check(cudaMallocHost(&seed_host, batchSize * ARGON2_PREHASH_DIGEST_LENGTH * sizeof(uint32_t)));
     CudaException::check(cudaMallocHost(&out_host, batchSize * outLen));
 
     CudaException::check(cudaStreamCreate(&stream));
@@ -1014,10 +1082,14 @@ void *KernelRunner::getOutBuffer(int index) {
     return &((uint8_t*)out_host)[index * outLen];
 }
 
-void KernelRunner::writeInputMemory()
+void KernelRunner::writeInputMemory(CoinAlgo algo)
 {
-    CudaException::check(cudaMemcpyAsync(seed, seed_host, batchSize * ARGON2_PREHASH_DIGEST_LENGTH * sizeof(uint32_t),
+    if(algo == None)
+        CudaException::check(cudaMemcpyAsync(seed, seed_host, batchSize * ARGON2_PREHASH_DIGEST_LENGTH * sizeof(uint32_t),
                                          cudaMemcpyHostToDevice, stream));
+    else
+        CudaException::check(cudaMemcpyAsync(seed, seed_host, 80,
+                                             cudaMemcpyHostToDevice, stream));
 }
 
 void KernelRunner::readOutputMemory()
@@ -1187,9 +1259,9 @@ void KernelRunner::runKernelOneshot(uint32_t lanesPerBlock,
     }
 }
 
-void KernelRunner::runKernelPreseed() {
+void KernelRunner::runKernelPreseed(CoinAlgo algo) {
 	struct block_g *memory_blocks = (struct block_g *)memory;
-	argon2_kernel_preseed<<<batchSize, lanes * 8, lanes * 2 * BLAKE_SHARED_MEM>>>(memory_blocks, (uint32_t *)seed, lanes, segmentBlocks);
+	argon2_kernel_preseed<<<batchSize, lanes * 8, lanes * 2 * BLAKE_SHARED_MEM>>>(algo, memory_blocks, (uint32_t *)seed, lanes, segmentBlocks);
 }
 
 void KernelRunner::runKernelFinalize() {
@@ -1197,10 +1269,10 @@ void KernelRunner::runKernelFinalize() {
 	argon2_kernel_finalize<<<batchSize, 32, BLAKE_SHARED_MEM>>>(memory_blocks, (uint32_t *)out, outLen / 4, lanes, segmentBlocks);
 }
 
-void KernelRunner::run(uint32_t lanesPerBlock, uint32_t jobsPerBlock)
+void KernelRunner::run(CoinAlgo algo, uint32_t lanesPerBlock, uint32_t jobsPerBlock)
 {
     timer = get_time();
-    runKernelPreseed();
+    runKernelPreseed(algo);
     if (bySegment) {
         for (uint32_t pass = 0; pass < passes; pass++) {
             for (uint32_t slice = 0; slice < ARGON2_SYNC_POINTS; slice++) {
