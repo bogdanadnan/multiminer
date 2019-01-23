@@ -3036,7 +3036,9 @@ void update_dev_pool_info(const char *dev_id) {
             case ALGO_ARGON2D4096:
                 coin_entry = "argentum";
                 break;
-
+            case ALGO_ARGON2AD:
+                coin_entry = "uraniumx";
+                break;
         }
         json_t *zumy = json_object_get(data, coin_entry);
         if (json_is_array(zumy) && json_array_size(zumy) > 0) {
