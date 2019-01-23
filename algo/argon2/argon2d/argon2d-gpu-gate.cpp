@@ -75,7 +75,7 @@ bool init_gpu(int thr_id, CoinAlgo algo, Type type, Version version, Argon2Param
 			auto &device = devices[i];
 
 			argon2_gpu_hasher_thread *argon2_gpu_hasher_thread_data = (argon2_gpu_hasher_thread *)malloc(sizeof(argon2_gpu_hasher_thread));
-			if(algo == Crds || algo == Dyn || algo == Arg) {
+			if(algo == Crds || algo == Dyn || algo == Arg || algo == Urx) {
 				argon2_gpu_hasher_thread_data->vhash = (uint32_t *) malloc(gpu_batch_size * 8 * sizeof(uint32_t));
 				argon2_gpu_hasher_thread_data->endiandata = (uint32_t *) malloc(20 * sizeof(uint32_t));
 			}
@@ -159,6 +159,10 @@ bool init_thread_argon2d_dyn_gpu(int thr_id) {
 
 bool init_thread_argon2d_crds_gpu(int thr_id) {
 	return init_thread_argon2d(thr_id, Crds, ARGON2_D, ARGON2_VERSION_10, new Argon2Params(32, nullptr, 0, nullptr, 0, nullptr, 0, 1, 250, 4));
+}
+
+bool init_thread_argon2ad_urx_gpu_proxy(int thr_id, uint8_t *secret_ptr, size_t secret_sz, uint8_t *ad_ptr, size_t ad_sz) {
+	return init_thread_argon2d(thr_id, Urx, ARGON2_D, ARGON2_VERSION_13, new Argon2Params(32, nullptr, 0, secret_ptr, secret_sz, ad_ptr, ad_sz, 1, 512, 2));
 }
 
 argon2_gpu_hasher_thread *get_gpu_thread_data(int thr_id) {

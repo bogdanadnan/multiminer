@@ -22,7 +22,10 @@ enum {
 
 KernelRunner::KernelRunner(const ProgramContext *programContext,
                            const Argon2Params *params, const Device *device,
-                           std::size_t batchSize, size_t outLen, bool bySegment, bool precompute)
+                           std::size_t batchSize, size_t outLen,
+                           bool bySegment, bool precompute,
+						   std::uint8_t *secret_, std::size_t secretLen_,
+						   std::uint8_t *ad_, std::size_t adLen_)
     : programContext(programContext), params(params), batchSize(batchSize), outLen(outLen),
       bySegment(bySegment), precompute(precompute),
       memorySize(params->getMemorySize() * batchSize)
@@ -45,6 +48,26 @@ KernelRunner::KernelRunner(const ProgramContext *programContext,
 	outBuffer = cl::Buffer(context,CL_MEM_WRITE_ONLY, batchSize * outLen);
 	seedHost = NULL;
 	outHost = NULL;
+
+    if(secret_ != NULL) {
+        secretLen = secretLen_;
+        secretBuffer = cl::Buffer(context, CL_MEM_READ_ONLY, secretLen);
+        queue.enqueueWriteBuffer(secretBuffer, true, 0, secretLen, secret_);
+    }
+    else {
+        secretLen = 0;
+        secretBuffer = cl::Buffer(context, CL_MEM_READ_ONLY, 1); // dummy buffer
+    }
+
+    if(ad_ != NULL) {
+        adLen = adLen_;
+        adBuffer = cl::Buffer(context, CL_MEM_READ_ONLY, adLen);
+        queue.enqueueWriteBuffer(adBuffer, true, 0, adLen, ad_);
+    }
+    else {
+        adLen = 0;
+        adBuffer = cl::Buffer(context, CL_MEM_READ_ONLY, 1); // dummy buffer
+    }
 
     Type type = programContext->getArgon2Type();
     if ((type == ARGON2_I || type == ARGON2_ID) && precompute) {
@@ -89,6 +112,10 @@ KernelRunner::KernelRunner(const ProgramContext *programContext,
     kpreseed.setArg<cl::Buffer>(2, seedBuffer);
     kpreseed.setArg<cl_uint>(3, lanes);
     kpreseed.setArg<cl_uint>(4, segmentBlocks);
+    kpreseed.setArg<cl::Buffer>(5, secretBuffer);
+    kpreseed.setArg<cl_uint>(6, secretLen);
+    kpreseed.setArg<cl::Buffer>(7, adBuffer);
+    kpreseed.setArg<cl_uint>(8, adLen);
 
     kworker.setArg<cl::Buffer>(1, memoryBuffer);
     if (precompute) {
@@ -179,7 +206,7 @@ void KernelRunner::run(CoinAlgo algo, std::uint32_t lanesPerBlock, std::uint32_t
     std::size_t shmemSizePreseed = lanes * 2 * 480;
 
     kpreseed.setArg<cl_uint>(0, algo);
-    kpreseed.setArg<cl::LocalSpaceArg>(5, { shmemSizePreseed });
+    kpreseed.setArg<cl::LocalSpaceArg>(9, { shmemSizePreseed });
     queue.enqueueNDRangeKernel(kpreseed, cl::NullRange,
                                cl::NDRange(8 * lanes, batchSize), cl::NDRange(8 * lanes, 1));
 

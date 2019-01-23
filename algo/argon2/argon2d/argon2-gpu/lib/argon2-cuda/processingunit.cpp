@@ -34,7 +34,9 @@ ProcessingUnit::ProcessingUnit(
              programContext->getArgon2Version(), params->getTimeCost(),
              params->getLanes(), params->getSegmentBlocks(), batchSize, params->getOutputLength(),
              device->getDeviceIndex(),
-             bySegment, precomputeRefs),
+             bySegment, precomputeRefs,
+             (std::uint8_t*)params->getSecret(), params->getSecretLength(),
+             (std::uint8_t*)params->getAssocData(), params->getAssocDataLength()),
       bestLanesPerBlock(runner.getMinLanesPerBlock()),
       bestJobsPerBlock(runner.getMinJobsPerBlock()),
       algo(algo)

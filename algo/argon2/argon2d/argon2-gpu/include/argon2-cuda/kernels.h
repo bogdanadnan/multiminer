@@ -32,6 +32,10 @@ private:
 	void *out;
 	void *out_host;
     void *refs;
+    std::uint32_t *secret;
+	std::size_t secretLen;
+    std::uint32_t *ad;
+    std::size_t adLen;
 
     void precomputeRefs();
 
@@ -63,7 +67,9 @@ public:
                  std::uint32_t passes, std::uint32_t lanes,
                  std::uint32_t segmentBlocks, std::size_t batchSize, std::size_t outLen,
                  std::int32_t deviceIndex,
-                 bool bySegment, bool precompute);
+                 bool bySegment, bool precompute,
+                 std::uint8_t *secret, std::size_t secretLen,
+                 std::uint8_t *ad, std::size_t adLen);
     ~KernelRunner();
 
     void writeInputMemory(CoinAlgo algo);

@@ -19,7 +19,8 @@ ProcessingUnit::ProcessingUnit(
 		bool bySegment, bool precomputeRefs)
     : programContext(programContext), params(params), device(device),
       runner(programContext, params, device, batchSize, params->getOutputLength(), bySegment,
-             precomputeRefs),
+             precomputeRefs, (std::uint8_t*)params->getSecret(), params->getSecretLength(),
+			 (std::uint8_t*)params->getAssocData(), params->getAssocDataLength()),
       bestLanesPerBlock(runner.getMinLanesPerBlock()),
       bestJobsPerBlock(runner.getMinJobsPerBlock()),
       algo(algo)

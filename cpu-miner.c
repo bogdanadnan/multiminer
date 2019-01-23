@@ -3185,7 +3185,7 @@ int main(int argc, char *argv[]) {
         show_usage_and_exit(1);
     }
 
-    if (use_gpu != NULL && opt_algo != ALGO_ARGON2D4096 && opt_algo != ALGO_ARGON2D500 && opt_algo != ALGO_ARGON2D250) {
+    if (use_gpu != NULL && opt_algo != ALGO_ARGON2D4096 && opt_algo != ALGO_ARGON2D500 && opt_algo != ALGO_ARGON2D250 && opt_algo != ALGO_ARGON2AD) {
         fprintf(stderr, "%s: GPU can only be used with argon2i and argon2d algos.\n", argv[0]);
         show_usage_and_exit(1);
     }
