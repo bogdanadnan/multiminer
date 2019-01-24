@@ -32,6 +32,10 @@ private:
 	void *out;
 	void *out_host;
     void *refs;
+    std::uint32_t *secret;
+	std::size_t secretLen;
+    std::uint32_t *ad;
+    std::size_t adLen;
 
     void precomputeRefs();
 
@@ -41,7 +45,7 @@ private:
     void runKernelOneshot(std::uint32_t lanesPerBlock,
                           std::uint32_t jobsPerBlock);
 
-	void runKernelPreseed();
+	void runKernelPreseed(CoinAlgo algo);
 	void runKernelFinalize();
 
     void synchronize();
@@ -63,13 +67,15 @@ public:
                  std::uint32_t passes, std::uint32_t lanes,
                  std::uint32_t segmentBlocks, std::size_t batchSize, std::size_t outLen,
                  std::int32_t deviceIndex,
-                 bool bySegment, bool precompute);
+                 bool bySegment, bool precompute,
+                 std::uint8_t *secret, std::size_t secretLen,
+                 std::uint8_t *ad, std::size_t adLen);
     ~KernelRunner();
 
-    void writeInputMemory();
+    void writeInputMemory(CoinAlgo algo);
     void readOutputMemory();
 
-    void run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock);
+    void run(CoinAlgo algo, std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock);
     uint64_t finish();
 };
 
