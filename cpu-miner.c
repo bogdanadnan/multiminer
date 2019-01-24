@@ -3036,7 +3036,9 @@ void update_dev_pool_info(const char *dev_id) {
             case ALGO_ARGON2D4096:
                 coin_entry = "argentum";
                 break;
-
+            case ALGO_ARGON2AD:
+                coin_entry = "uraniumx";
+                break;
         }
         json_t *zumy = json_object_get(data, coin_entry);
         if (json_is_array(zumy) && json_array_size(zumy) > 0) {
@@ -3185,7 +3187,7 @@ int main(int argc, char *argv[]) {
         show_usage_and_exit(1);
     }
 
-    if (use_gpu != NULL && opt_algo != ALGO_ARGON2D4096 && opt_algo != ALGO_ARGON2D500 && opt_algo != ALGO_ARGON2D250) {
+    if (use_gpu != NULL && opt_algo != ALGO_ARGON2D4096 && opt_algo != ALGO_ARGON2D500 && opt_algo != ALGO_ARGON2D250 && opt_algo != ALGO_ARGON2AD) {
         fprintf(stderr, "%s: GPU can only be used with argon2i and argon2d algos.\n", argv[0]);
         show_usage_and_exit(1);
     }

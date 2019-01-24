@@ -18,6 +18,7 @@ private:
     const ProgramContext *programContext;
     const Argon2Params *params;
     const Device *device;
+    const CoinAlgo algo;
 
     KernelRunner runner;
     std::uint32_t bestLanesPerBlock;
@@ -29,11 +30,13 @@ public:
 
     ProcessingUnit(
             const ProgramContext *programContext, const Argon2Params *params,
-            const Device *device, std::size_t batchSize,
+            const Device *device, std::size_t batchSize, const CoinAlgo coinAlgo,
             bool bySegment = true, bool precomputeRefs = false);
 
     void setPassword(std::size_t index, const void *pw, std::size_t pwSize);
     void setPasswordSameSalt(std::size_t index, const void *pw, std::size_t pwSize);
+    void setInput(const void *pw, std::size_t pwSize);
+
 	void *getHash(std::size_t index);
 
     void beginProcessing();
@@ -61,13 +64,14 @@ public:
 
     ProcessingUnit(
             const ProgramContext *programContext, const Argon2Params *params,
-            const Device *device, std::size_t batchSize,
+            const Device *device, std::size_t batchSize, const CoinAlgo coinAlgo,
             bool bySegment = true, bool precomputeRefs = false) : params(params)
     {
     }
 
     void setPassword(std::size_t index, const void *pw, std::size_t pwSize) { }
     void setPasswordSameSalt(std::size_t index, const void *pw, std::size_t pwSize) { }
+    void setInput(const void *pw, std::size_t pwSize) { }
 
     void *getHash(std::size_t index) { return NULL; }
 
