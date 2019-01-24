@@ -15,7 +15,10 @@ multiminer is a fork of cpuminer-opt by Jay D Dee.
 (https://github.com/JayDDee/cpuminer-opt)
 
 I've added support for GPU mining a couple of Argon2D coins:
-Zumy/Credits (argon2d250), Dynamic (argon2d500) and Argentum/Unitus (argon2d4096)
+Zumy/Credits (argon2d250), Dynamic (argon2d500) and Argentum/Unitus (argon2d4096).
+Support for UraniumX (argon2ad) was also added and is in beta testing, with a lot of
+hashrate optimizations for other algos. (**please checkout beta branch to use it - 
+keep in mind that it might not be stable tough**)
 
 Miner programs are often flagged as malware by antivirus programs. This is
 a false positive, they are flagged simply because they are cryptocurrency 
@@ -97,6 +100,10 @@ sudo update-alternatives --config g++
 ```sh
 git clone http://github.com/bogdanadnan/multiminer
 ```
+Or to clone beta branch (for latest improvements):
+```sh
+git clone -b beta http://github.com/bogdanadnan/multiminer
+```
 4. Build the source code:
 ```sh
 cd multiminer
@@ -148,6 +155,7 @@ Supported Algorithms
                           argon2d250    argon2d-crds, Credits (CRDS) & Zumy (ZMY)
                           argon2d500    argon2d-dyn,  Dynamic (DYN)
                           argon2d4096   argon2d-uis, Unitus, (UIS)
+                          argon2ad      UraniumX, (URX) - in beta
                           axiom         Shabal-256 MemoHash
                           bastion
                           blake         Blake-256 (SFR)
