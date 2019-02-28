@@ -859,8 +859,8 @@ Options:\n\
       --gpu-id=N1,N2    Use GPU devices with specific indexes in detected devices\n\
                           default use all devices\n\
       --gpu-batchsize=N Specify batch size - default 1\n\
-      --cpu-threads     how many threads to use for cpu mining (valid only in combination with use-gpu & use-cpu arguments)\
-      --gpu-threads     how many threads to use for gpu mining (valid only in combination with use-gpu argument)\
+      --cpu-threads     how many threads to use for cpu mining (valid only in combination with use-gpu & use-cpu arguments)\n\
+      --gpu-threads     how many threads to use for gpu mining (valid only in combination with use-gpu argument)\n\
       -c, --config=FILE load a JSON-format configuration file\n\
       -V, --version     display version information and exit\n\
       -h, --help        display this help text and exit\n\
