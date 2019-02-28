@@ -3164,6 +3164,10 @@ int check_gpu_capability(char *_use_gpu, char *_gpu_id, int _gpu_batch_size, int
 int gpu_device_count;
 
 bool is_cpu_thread(int thr_id) {
+    if(use_gpu == NULL)
+        return true;
+    if(use_cpu == false)
+        return false;
     return  (opt_n_threads - thr_id) <= cpu_threads;
 }
 
