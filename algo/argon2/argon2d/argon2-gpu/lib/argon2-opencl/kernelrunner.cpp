@@ -2,6 +2,7 @@
 #include <windows.h>
 #endif
 
+#include "argon2-gpu-common/argon2-common.h"
 #include "kernelrunner.h"
 
 #include <stdexcept>
@@ -21,7 +22,10 @@ enum {
 
 KernelRunner::KernelRunner(const ProgramContext *programContext,
                            const Argon2Params *params, const Device *device,
-                           std::size_t batchSize, size_t outLen, bool bySegment, bool precompute)
+                           std::size_t batchSize, size_t outLen,
+                           bool bySegment, bool precompute,
+						   std::uint8_t *secret_, std::size_t secretLen_,
+						   std::uint8_t *ad_, std::size_t adLen_)
     : programContext(programContext), params(params), batchSize(batchSize), outLen(outLen),
       bySegment(bySegment), precompute(precompute),
       memorySize(params->getMemorySize() * batchSize)
@@ -44,6 +48,26 @@ KernelRunner::KernelRunner(const ProgramContext *programContext,
 	outBuffer = cl::Buffer(context,CL_MEM_WRITE_ONLY, batchSize * outLen);
 	seedHost = NULL;
 	outHost = NULL;
+
+    if(secret_ != NULL) {
+        secretLen = secretLen_;
+        secretBuffer = cl::Buffer(context, CL_MEM_READ_ONLY, secretLen);
+        queue.enqueueWriteBuffer(secretBuffer, true, 0, secretLen, secret_);
+    }
+    else {
+        secretLen = 0;
+        secretBuffer = cl::Buffer(context, CL_MEM_READ_ONLY, 1); // dummy buffer
+    }
+
+    if(ad_ != NULL) {
+        adLen = adLen_;
+        adBuffer = cl::Buffer(context, CL_MEM_READ_ONLY, adLen);
+        queue.enqueueWriteBuffer(adBuffer, true, 0, adLen, ad_);
+    }
+    else {
+        adLen = 0;
+        adBuffer = cl::Buffer(context, CL_MEM_READ_ONLY, 1); // dummy buffer
+    }
 
     Type type = programContext->getArgon2Type();
     if ((type == ARGON2_I || type == ARGON2_ID) && precompute) {
@@ -84,10 +108,14 @@ KernelRunner::KernelRunner(const ProgramContext *programContext,
     kfinalize = cl::Kernel(programContext->getProgram(),
                          "argon2_kernel_finalize");
 
-    kpreseed.setArg<cl::Buffer>(0, memoryBuffer);
-    kpreseed.setArg<cl::Buffer>(1, seedBuffer);
-    kpreseed.setArg<cl_uint>(2, lanes);
-    kpreseed.setArg<cl_uint>(3, segmentBlocks);
+    kpreseed.setArg<cl::Buffer>(1, memoryBuffer);
+    kpreseed.setArg<cl::Buffer>(2, seedBuffer);
+    kpreseed.setArg<cl_uint>(3, lanes);
+    kpreseed.setArg<cl_uint>(4, segmentBlocks);
+    kpreseed.setArg<cl::Buffer>(5, secretBuffer);
+    kpreseed.setArg<cl_uint>(6, secretLen);
+    kpreseed.setArg<cl::Buffer>(7, adBuffer);
+    kpreseed.setArg<cl_uint>(8, adLen);
 
     kworker.setArg<cl::Buffer>(1, memoryBuffer);
     if (precompute) {
@@ -136,10 +164,15 @@ void KernelRunner::precomputeRefs()
     queue.finish();
 }
 
-void KernelRunner::mapMemory()
+void KernelRunner::mapMemory(CoinAlgo algo)
 {
-    seedHost = queue.enqueueMapBuffer(seedBuffer, true, CL_MAP_WRITE,
+	if(algo == None)
+	    seedHost = queue.enqueueMapBuffer(seedBuffer, true, CL_MAP_WRITE,
                                       0, batchSize * ARGON2_PREHASH_DIGEST_LENGTH);
+	else
+		seedHost = queue.enqueueMapBuffer(seedBuffer, true, CL_MAP_WRITE,
+										  0, 80);
+
     outHost = queue.enqueueMapBuffer(outBuffer, true, CL_MAP_READ,
                                       0, batchSize * outLen);
 }
@@ -150,7 +183,7 @@ void KernelRunner::unmapMemory()
     queue.enqueueUnmapMemObject(outBuffer, outHost);
 }
 
-void KernelRunner::run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
+void KernelRunner::run(CoinAlgo algo, std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
 {
     timer = get_time();
     std::uint32_t lanes = params->getLanes();
@@ -170,8 +203,12 @@ void KernelRunner::run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
         throw std::logic_error("Invalid jobsPerBlock!");
     }
 
+    std::size_t shmemSizePreseed = lanes * 2 * 480;
+
+    kpreseed.setArg<cl_uint>(0, algo);
+    kpreseed.setArg<cl::LocalSpaceArg>(9, { shmemSizePreseed });
     queue.enqueueNDRangeKernel(kpreseed, cl::NullRange,
-                               cl::NDRange(2 * lanes, batchSize), cl::NDRange(2 * lanes, 1));
+                               cl::NDRange(8 * lanes, batchSize), cl::NDRange(8 * lanes, 1));
 
     cl::NDRange globalRange { THREADS_PER_LANE * lanes, batchSize };
     cl::NDRange localRange { THREADS_PER_LANE * lanesPerBlock, jobsPerBlock };
@@ -194,6 +231,9 @@ void KernelRunner::run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock)
                                    globalRange, localRange);
     }
 
+    std::size_t shmemSizeFinalize = 480;
+
+    kfinalize.setArg<cl::LocalSpaceArg>(5, { shmemSizeFinalize });
     queue.enqueueNDRangeKernel(kfinalize, cl::NullRange,
                                cl::NDRange(THREADS_PER_LANE, batchSize), cl::NDRange(THREADS_PER_LANE, 1));
 }

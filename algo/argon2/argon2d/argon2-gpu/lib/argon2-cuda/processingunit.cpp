@@ -27,16 +27,19 @@ static bool isPowerOfTwo(std::uint32_t x)
 
 ProcessingUnit::ProcessingUnit(
         const ProgramContext *programContext, const Argon2Params *params,
-        const Device *device, std::size_t batchSize, bool bySegment,
+        const Device *device, std::size_t batchSize, const CoinAlgo algo, bool bySegment,
         bool precomputeRefs)
     : programContext(programContext), params(params), device(device),
       runner(programContext->getArgon2Type(),
              programContext->getArgon2Version(), params->getTimeCost(),
              params->getLanes(), params->getSegmentBlocks(), batchSize, params->getOutputLength(),
              device->getDeviceIndex(),
-             bySegment, precomputeRefs),
+             bySegment, precomputeRefs,
+             (std::uint8_t*)params->getSecret(), params->getSecretLength(),
+             (std::uint8_t*)params->getAssocData(), params->getAssocDataLength()),
       bestLanesPerBlock(runner.getMinLanesPerBlock()),
-      bestJobsPerBlock(runner.getMinJobsPerBlock())
+      bestJobsPerBlock(runner.getMinJobsPerBlock()),
+      algo(algo)
 {
     setCudaDevice(device->getDeviceIndex());
 
@@ -44,6 +47,8 @@ ProcessingUnit::ProcessingUnit(
     for (std::size_t i = 0; i < batchSize; i++) {
         setPassword(i, NULL, 0);
     }
+
+    runner.writeInputMemory(None);
 
     if (runner.getMaxLanesPerBlock() > runner.getMinLanesPerBlock()
             && isPowerOfTwo(runner.getMaxLanesPerBlock())) {
@@ -57,7 +62,7 @@ ProcessingUnit::ProcessingUnit(
         {
             uint64_t time;
             try {
-                runner.run(lpb, bestJobsPerBlock);
+                runner.run(None, lpb, bestJobsPerBlock);
                 time = runner.finish();
             } catch(CudaException &ex) {
 #ifndef NDEBUG
@@ -97,7 +102,7 @@ ProcessingUnit::ProcessingUnit(
         {
             uint64_t time;
             try {
-                runner.run(bestLanesPerBlock, jpb);
+                runner.run(None, bestLanesPerBlock, jpb);
                 time = runner.finish();
             } catch(CudaException &ex) {
 #ifndef NDEBUG
@@ -142,6 +147,13 @@ void ProcessingUnit::setPasswordSameSalt(std::size_t index, const void *pw,
                             programContext->getArgon2Version());
 }
 
+void ProcessingUnit::setInput(const void *pw,
+                                 std::size_t pwSize)
+{
+    void *buffer = runner.getSeedBuffer(0);
+    memcpy(buffer, pw, pwSize);
+}
+
 void *ProcessingUnit::getHash(std::size_t index)
 {
     return runner.getOutBuffer(index);
@@ -150,8 +162,8 @@ void *ProcessingUnit::getHash(std::size_t index)
 void ProcessingUnit::beginProcessing()
 {
     setCudaDevice(device->getDeviceIndex());
-    runner.writeInputMemory();
-    runner.run(bestLanesPerBlock, bestJobsPerBlock);
+    runner.writeInputMemory(algo);
+    runner.run(algo, bestLanesPerBlock, bestJobsPerBlock);
 }
 
 void ProcessingUnit::endProcessing()

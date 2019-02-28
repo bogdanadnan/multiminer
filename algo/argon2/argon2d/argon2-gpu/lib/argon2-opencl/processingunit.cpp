@@ -15,15 +15,17 @@ static bool isPowerOfTwo(std::uint32_t x)
 
 ProcessingUnit::ProcessingUnit(
         const ProgramContext *programContext, const Argon2Params *params,
-        const Device *device, std::size_t batchSize,
-        bool bySegment, bool precomputeRefs)
+        const Device *device, std::size_t batchSize, const CoinAlgo algo,
+		bool bySegment, bool precomputeRefs)
     : programContext(programContext), params(params), device(device),
       runner(programContext, params, device, batchSize, params->getOutputLength(), bySegment,
-             precomputeRefs),
+             precomputeRefs, (std::uint8_t*)params->getSecret(), params->getSecretLength(),
+			 (std::uint8_t*)params->getAssocData(), params->getAssocDataLength()),
       bestLanesPerBlock(runner.getMinLanesPerBlock()),
-      bestJobsPerBlock(runner.getMinJobsPerBlock())
+      bestJobsPerBlock(runner.getMinJobsPerBlock()),
+      algo(algo)
 {
-    runner.mapMemory();
+    runner.mapMemory(None);
     /* pre-fill first blocks with pseudo-random data: */
     for (std::size_t i = 0; i < batchSize; i++) {
         setPassword(i, NULL, 0);
@@ -42,7 +44,7 @@ ProcessingUnit::ProcessingUnit(
         {
             std::uint64_t time;
             try {
-                runner.run(lpb, bestJobsPerBlock);
+                runner.run(None, lpb, bestJobsPerBlock);
                 time = runner.finish();
             } catch(cl::Error &ex) {
 #ifndef NDEBUG
@@ -82,7 +84,7 @@ ProcessingUnit::ProcessingUnit(
         {
 			std::uint64_t time;
             try {
-                runner.run(bestLanesPerBlock, jpb);
+                runner.run(None, bestLanesPerBlock, jpb);
                 time = runner.finish();
             } catch(cl::Error &ex) {
 #ifndef NDEBUG
@@ -108,7 +110,7 @@ ProcessingUnit::ProcessingUnit(
 #endif
     }
 
-    runner.mapMemory();
+    runner.mapMemory(algo);
 }
 
 void ProcessingUnit::setPassword(std::size_t index, const void *pw,
@@ -129,6 +131,13 @@ void ProcessingUnit::setPasswordSameSalt(std::size_t index, const void *pw,
                             programContext->getArgon2Version());
 }
 
+void ProcessingUnit::setInput(const void *pw,
+                              std::size_t pwSize)
+{
+    void *buffer = runner.getSeedBuffer(0);
+    memcpy(buffer, pw, pwSize);
+}
+
 void *ProcessingUnit::getHash(std::size_t index)
 {
 	return runner.getOutBuffer(index);
@@ -137,12 +146,12 @@ void *ProcessingUnit::getHash(std::size_t index)
 void ProcessingUnit::beginProcessing()
 {
 	runner.unmapMemory();
-    runner.run(bestLanesPerBlock, bestJobsPerBlock);
+    runner.run(algo, bestLanesPerBlock, bestJobsPerBlock);
 }
 
 void ProcessingUnit::endProcessing()
 {
-	runner.mapMemory();
+	runner.mapMemory(algo);
     runner.finish();
 }
 

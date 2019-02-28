@@ -85,5 +85,5 @@ target_include_directories(argon2-opencl PRIVATE
     lib/argon2-opencl
 )
 target_link_libraries(argon2-opencl
-    argon2-gpu-common -lOpenCL
+    argon2-gpu-common ${OpenCL_LIBRARIES}
 )

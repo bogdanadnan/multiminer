@@ -20,8 +20,9 @@ private:
 
     cl::CommandQueue queue;
 	cl::Kernel kpreseed, kworker, kfinalize;
-    cl::Buffer memoryBuffer, refsBuffer, seedBuffer, outBuffer;
+    cl::Buffer memoryBuffer, refsBuffer, seedBuffer, outBuffer, secretBuffer, adBuffer;
     void *seedHost, *outHost;
+    std::size_t secretLen, adLen;
 
     std::size_t memorySize;
 
@@ -44,12 +45,15 @@ public:
 
     KernelRunner(const ProgramContext *programContext,
                  const Argon2Params *params, const Device *device,
-                 std::size_t batchSize, std::size_t outLen, bool bySegment, bool precompute);
+                 std::size_t batchSize, std::size_t outLen,
+                 bool bySegment, bool precompute,
+                 std::uint8_t *secret, std::size_t secretLen,
+				 std::uint8_t *ad, std::size_t adLen);
 
-	void mapMemory();
+	void mapMemory(CoinAlgo algo);
 	void unmapMemory();
 
-    void run(std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock);
+    void run(CoinAlgo algo, std::uint32_t lanesPerBlock, std::uint32_t jobsPerBlock);
     uint64_t finish();
 };
 
