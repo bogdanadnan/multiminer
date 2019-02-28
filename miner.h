@@ -85,22 +85,22 @@ void *alloca (size_t);
 #define LOG_BLUE 0x10 /* unique value */
 #else
 enum {
-	LOG_ERR,
-	LOG_WARNING,
-	LOG_NOTICE,
-	LOG_INFO,
-	LOG_DEBUG,
-	/* custom notices */
-	LOG_BLUE = 0x10,
+    LOG_ERR,
+    LOG_WARNING,
+    LOG_NOTICE,
+    LOG_INFO,
+    LOG_DEBUG,
+    /* custom notices */
+    LOG_BLUE = 0x10,
 };
 #endif
 
 static inline bool is_windows(void)
 {
 #ifdef WIN32
-	return true;
+    return true;
 #else
-	return false;
+    return false;
 #endif
 }
  
@@ -120,9 +120,9 @@ static inline bool is_windows(void)
 static inline uint32_t swab32(uint32_t v)
 {
 #ifdef WANT_BUILTIN_BSWAP
-	return __builtin_bswap32(v);
+    return __builtin_bswap32(v);
 #else
-	return bswap_32(v);
+    return bswap_32(v);
 #endif
 }
 
@@ -138,29 +138,29 @@ typedef unsigned char uchar;
 #if !HAVE_DECL_BE32DEC
 static inline uint32_t be32dec(const void *pp)
 {
-	const uint8_t *p = (uint8_t const *)pp;
-	return ((uint32_t)(p[3]) + ((uint32_t)(p[2]) << 8) +
-	    ((uint32_t)(p[1]) << 16) + ((uint32_t)(p[0]) << 24));
+    const uint8_t *p = (uint8_t const *)pp;
+    return ((uint32_t)(p[3]) + ((uint32_t)(p[2]) << 8) +
+        ((uint32_t)(p[1]) << 16) + ((uint32_t)(p[0]) << 24));
 }
 #endif
 
 #if !HAVE_DECL_LE32DEC
 static inline uint32_t le32dec(const void *pp)
 {
-	const uint8_t *p = (uint8_t const *)pp;
-	return ((uint32_t)(p[0]) + ((uint32_t)(p[1]) << 8) +
-	    ((uint32_t)(p[2]) << 16) + ((uint32_t)(p[3]) << 24));
+    const uint8_t *p = (uint8_t const *)pp;
+    return ((uint32_t)(p[0]) + ((uint32_t)(p[1]) << 8) +
+        ((uint32_t)(p[2]) << 16) + ((uint32_t)(p[3]) << 24));
 }
 #endif
 
 #if !HAVE_DECL_BE32ENC
 static inline void be32enc(void *pp, uint32_t x)
 {
-	uint8_t *p = (uint8_t *)pp;
-	p[3] = x & 0xff;
-	p[2] = (x >> 8) & 0xff;
-	p[1] = (x >> 16) & 0xff;
-	p[0] = (x >> 24) & 0xff;
+    uint8_t *p = (uint8_t *)pp;
+    p[3] = x & 0xff;
+    p[2] = (x >> 8) & 0xff;
+    p[1] = (x >> 16) & 0xff;
+    p[0] = (x >> 24) & 0xff;
 }
 #endif
 
@@ -187,28 +187,28 @@ static inline void swab32_array( uint32_t* dst_p, uint32_t* src_p, int n )
 #if !HAVE_DECL_LE32ENC
 static inline void le32enc(void *pp, uint32_t x)
 {
-	uint8_t *p = (uint8_t *)pp;
-	p[0] = x & 0xff;
-	p[1] = (x >> 8) & 0xff;
-	p[2] = (x >> 16) & 0xff;
-	p[3] = (x >> 24) & 0xff;
+    uint8_t *p = (uint8_t *)pp;
+    p[0] = x & 0xff;
+    p[1] = (x >> 8) & 0xff;
+    p[2] = (x >> 16) & 0xff;
+    p[3] = (x >> 24) & 0xff;
 }
 #endif
 
 #if !HAVE_DECL_LE16DEC
 static inline uint16_t le16dec(const void *pp)
 {
-	const uint8_t *p = (uint8_t const *)pp;
-	return ((uint16_t)(p[0]) + ((uint16_t)(p[1]) << 8));
+    const uint8_t *p = (uint8_t const *)pp;
+    return ((uint16_t)(p[0]) + ((uint16_t)(p[1]) << 8));
 }
 #endif
 
 #if !HAVE_DECL_LE16ENC
 static inline void le16enc(void *pp, uint16_t x)
 {
-	uint8_t *p = (uint8_t *)pp;
-	p[0] = x & 0xff;
-	p[1] = (x >> 8) & 0xff;
+    uint8_t *p = (uint8_t *)pp;
+    p[0] = x & 0xff;
+    p[1] = (x >> 8) & 0xff;
 }
 #endif
 
@@ -252,26 +252,27 @@ void work_copy(struct work *dest, const struct work *src);
 void *api_thread(void *userdata);
 
 struct cpu_info {
-	int thr_id;
-	int accepted;
-	int rejected;
-	double khashes;
-	bool has_monitoring;
-	float cpu_temp;
-	int cpu_fan;
-	uint32_t cpu_clock;
+    int thr_id;
+    int accepted;
+    int rejected;
+    double khashes;
+    bool has_monitoring;
+    float cpu_temp;
+    int cpu_fan;
+    uint32_t cpu_clock;
 };
 
 struct thr_api {
-	int id;
-	pthread_t pth;
-	struct thread_q	*q;
+    int id;
+    pthread_t pth;
+    struct thread_q    *q;
 };
 /* end of api */
 
+bool is_cpu_thread(int thr_id);
 
-#define JSON_RPC_LONGPOLL	(1 << 0)
-#define JSON_RPC_QUIET_404	(1 << 1)
+#define JSON_RPC_LONGPOLL    (1 << 0)
+#define JSON_RPC_QUIET_404    (1 << 1)
 #define JSON_RPC_IGNOREERR  (1 << 2)
 
 #define JSON_BUF_LEN 512
@@ -310,7 +311,7 @@ struct thr_api {
 void   applog(int prio, const char *fmt, ...);
 void   restart_threads(void);
 extern json_t *json_rpc_call( CURL *curl, const char *url, const char *userpass,
-                	const char *rpc_req, int *curl_err, int flags );
+                    const char *rpc_req, int *curl_err, int flags );
 void   bin2hex( char *s, const unsigned char *p, size_t len );
 char  *abin2hex( const unsigned char *p, size_t len );
 bool   hex2bin( unsigned char *p, const char *hexstr, size_t len );
@@ -356,62 +357,62 @@ void   cpu_brand_string( char* s );
 float cpu_temp( int core );
 
 struct work {
-	uint32_t data[48];
-	uint32_t target[8];
+    uint32_t data[48];
+    uint32_t target[8];
 
-	double targetdiff;
-	double shareratio;
-	double sharediff;
+    double targetdiff;
+    double shareratio;
+    double sharediff;
 
-	int height;
-	char *txs;
-	char *workid;
+    int height;
+    char *txs;
+    char *workid;
 
-	char *job_id;
-	size_t xnonce2_len;
-	unsigned char *xnonce2;
+    char *job_id;
+    size_t xnonce2_len;
+    unsigned char *xnonce2;
         uint32_t nonces[8];
 };
 
 struct stratum_job {
-	char *job_id;
-	unsigned char prevhash[32];
+    char *job_id;
+    unsigned char prevhash[32];
         unsigned char claim[32]; // lbry
-	size_t coinbase_size;
-	unsigned char *coinbase;
-	unsigned char *xnonce2;
-	int merkle_count;
-	unsigned char **merkle;
-	unsigned char version[4];
-	unsigned char nbits[4];
-	unsigned char ntime[4];
-	bool clean;
-	double diff;
+    size_t coinbase_size;
+    unsigned char *coinbase;
+    unsigned char *xnonce2;
+    int merkle_count;
+    unsigned char **merkle;
+    unsigned char version[4];
+    unsigned char nbits[4];
+    unsigned char ntime[4];
+    bool clean;
+    double diff;
 };
 
 struct stratum_ctx {
-	char *url;
+    char *url;
 
-	CURL *curl;
-	char *curl_url;
-	char curl_err_str[CURL_ERROR_SIZE];
-	curl_socket_t sock;
-	size_t sockbuf_size;
-	char *sockbuf;
-	pthread_mutex_t sock_lock;
+    CURL *curl;
+    char *curl_url;
+    char curl_err_str[CURL_ERROR_SIZE];
+    curl_socket_t sock;
+    size_t sockbuf_size;
+    char *sockbuf;
+    pthread_mutex_t sock_lock;
 
-	double next_diff;
-	double sharediff;
+    double next_diff;
+    double sharediff;
 
-	char *session_id;
-	size_t xnonce1_size;
-	unsigned char *xnonce1;
-	size_t xnonce2_size;
-	struct stratum_job job;
-	struct work work;
-	pthread_mutex_t work_lock;
+    char *session_id;
+    size_t xnonce1_size;
+    unsigned char *xnonce1;
+    size_t xnonce2_size;
+    struct stratum_job job;
+    struct work work;
+    pthread_mutex_t work_lock;
 
-	int bloc_height;
+    int bloc_height;
 };
 
 bool stratum_socket_full(struct stratum_ctx *sctx, int timeout);
@@ -498,6 +499,7 @@ enum algos {
         ALGO_ARGON2D250,
         ALGO_ARGON2D500,
         ALGO_ARGON2D4096,
+        ALGO_ARGON2AD,
 //        ALGO_AXIOM,
         ALGO_BASTION,
         ALGO_BLAKE,       
@@ -579,8 +581,8 @@ static const char* const algo_names[] = {
         "argon2",
         "argon2d250",
         "argon2d500",
-		"argon2d4096",
-		"argon2d4096-gpu",
+        "argon2d4096",
+        "argon2ad",
 //        "axiom",
         "bastion",
         "blake",
@@ -672,8 +674,11 @@ extern int opt_timeout;
 extern "C" {
 #endif
 extern char *use_gpu;
+extern char *use_cpu;
 extern char *gpu_id;
 extern int gpu_batch_size;
+extern int gpu_threads;
+extern int cpu_threads;
 #ifdef __cplusplus
 }
 #endif
@@ -725,112 +730,113 @@ static char const usage[] = "\
 Usage: " PACKAGE_NAME " [OPTIONS]\n\
 Options:\n\
   -a, --algo=ALGO       specify the algorithm to use\n\
-						  allium        Garlicoin (GRLC)\n\
-						  anime         Animecoin (ANI)\n\
-						  argon2        Argon2 Coin (AR2)\n\
-						  argon2d250    argon2d-crds, Credits (CRDS)\n\
-						  argon2d500    argon2d-dyn, Dynamic (DYN)\n\
-						  argon2d4096   argon2d-uis, Unitus (UIS)\n\
-						  axiom         Shabal-256 MemoHash\n\
-						  bastion\n\
-						  blake         blake256r14 (SFR)\n\
-						  blakecoin     blake256r8\n\
-						  blake2s       Blake-2 S\n\
-						  bmw           BMW 256\n\
-						  c11           Chaincoin\n\
-						  cryptolight   Cryptonight-light\n\
-						  cryptonight   Cryptonote legacy\n\
-						  cryptonightv7 variant 7, Monero (XMR)\n\
-						  decred        Blake256r14dcr\n\
-						  deep          Deepcoin (DCN)\n\
-						  dmd-gr        Diamond\n\
-						  drop          Dropcoin\n\
-						  fresh         Fresh\n\
-						  groestl       Groestl coin\n\
-						  heavy         Heavy\n\
-						  hmq1725       Espers\n\
-						  hodl          Hodlcoin\n\
-						  jha           jackppot (Jackpotcoin)\n\
-						  keccak        Maxcoin\n\
-						  keccakc       Creative Coin\n\
-						  lbry          LBC, LBRY Credits\n\
-						  luffa         Luffa\n\
-						  lyra2h        Hppcoin\n\
-						  lyra2re       lyra2\n\
-						  lyra2rev2     lyrav2, Vertcoin\n\
-						  lyra2z        Zcoin (XZC)\n\
-						  lyra2z330     Lyra2 330 rows, Zoin (ZOI)\n\
-						  m7m           Magi (XMG)\n\
-						  myr-gr        Myriad-Groestl\n\
-						  neoscrypt     NeoScrypt(128, 2, 1)\n\
-						  nist5         Nist5\n\
-						  pentablake    5 x blake512\n\
-						  phi1612       phi, LUX coin\n\
-						  pluck         Pluck:128 (Supcoin)\n\
-						  polytimos\n\
-						  quark         Quark\n\
-						  qubit         Qubit\n\
-						  scrypt        scrypt(1024, 1, 1) (default)\n\
-						  scrypt:N      scrypt(N, 1, 1)\n\
-						  scryptjane:nf\n\
-						  sha256d       Double SHA-256\n\
-						  sha256t       Triple SHA-256, Onecoin (OC)\n\
-						  shavite3      Shavite3\n\
-						  skein         Skein+Sha (Skeincoin)\n\
-						  skein2        Double Skein (Woodcoin)\n\
-						  skunk         Signatum (SIGT)\n\
-						  timetravel    timeravel8, Machinecoin (MAC)\n\
-						  timetravel10  Bitcore (BTX)\n\
-						  tribus        Denarius (DNR)\n\
-						  vanilla       blake256r8vnl (VCash)\n\
-						  veltor\n\
-						  whirlpool\n\
-						  whirlpoolx\n\
-						  x11           Dash\n\
-						  x11evo        Revolvercoin (XRE)\n\
-						  x11gost       sib (SibCoin)\n\
-						  x12           Galaxie Cash (GCH)\n\
-						  x13           X13\n\
-						  x13sm3        hsr (Hshare)\n\
-						  x14            X14\n\
-						  x15           X15\n\
-						  x16r          Ravencoin (RVN)\n\
-						  x16s          Pigeoncoin (PGN)\n\
-						  x17\n\
-						  xevan         Bitsend (BSD)\n\
-						  yescrypt      Globlboost-Y (BSTY)\n\
-						  yescryptr8    BitZeny (ZNY)\n\
-						  yescryptr16   Yenten (YTN)\n\
-						  yescryptr32   WAVI\n\
-						  zr5           Ziftr\n\
+                          allium        Garlicoin (GRLC)\n\
+                          anime         Animecoin (ANI)\n\
+                          argon2        Argon2 Coin (AR2)\n\
+                          argon2d250    argon2d-crds, Credits (CRDS)\n\
+                          argon2d500    argon2d-dyn, Dynamic (DYN)\n\
+                          argon2d4096   argon2d-uis, Unitus (UIS)\n\
+                          argon2ad      argon2ad-urx, UraniumX (URX)\n\
+                          axiom         Shabal-256 MemoHash\n\
+                          bastion\n\
+                          blake         blake256r14 (SFR)\n\
+                          blakecoin     blake256r8\n\
+                          blake2s       Blake-2 S\n\
+                          bmw           BMW 256\n\
+                          c11           Chaincoin\n\
+                          cryptolight   Cryptonight-light\n\
+                          cryptonight   Cryptonote legacy\n\
+                          cryptonightv7 variant 7, Monero (XMR)\n\
+                          decred        Blake256r14dcr\n\
+                          deep          Deepcoin (DCN)\n\
+                          dmd-gr        Diamond\n\
+                          drop          Dropcoin\n\
+                          fresh         Fresh\n\
+                          groestl       Groestl coin\n\
+                          heavy         Heavy\n\
+                          hmq1725       Espers\n\
+                          hodl          Hodlcoin\n\
+                          jha           jackppot (Jackpotcoin)\n\
+                          keccak        Maxcoin\n\
+                          keccakc       Creative Coin\n\
+                          lbry          LBC, LBRY Credits\n\
+                          luffa         Luffa\n\
+                          lyra2h        Hppcoin\n\
+                          lyra2re       lyra2\n\
+                          lyra2rev2     lyrav2, Vertcoin\n\
+                          lyra2z        Zcoin (XZC)\n\
+                          lyra2z330     Lyra2 330 rows, Zoin (ZOI)\n\
+                          m7m           Magi (XMG)\n\
+                          myr-gr        Myriad-Groestl\n\
+                          neoscrypt     NeoScrypt(128, 2, 1)\n\
+                          nist5         Nist5\n\
+                          pentablake    5 x blake512\n\
+                          phi1612       phi, LUX coin\n\
+                          pluck         Pluck:128 (Supcoin)\n\
+                          polytimos\n\
+                          quark         Quark\n\
+                          qubit         Qubit\n\
+                          scrypt        scrypt(1024, 1, 1) (default)\n\
+                          scrypt:N      scrypt(N, 1, 1)\n\
+                          scryptjane:nf\n\
+                          sha256d       Double SHA-256\n\
+                          sha256t       Triple SHA-256, Onecoin (OC)\n\
+                          shavite3      Shavite3\n\
+                          skein         Skein+Sha (Skeincoin)\n\
+                          skein2        Double Skein (Woodcoin)\n\
+                          skunk         Signatum (SIGT)\n\
+                          timetravel    timeravel8, Machinecoin (MAC)\n\
+                          timetravel10  Bitcore (BTX)\n\
+                          tribus        Denarius (DNR)\n\
+                          vanilla       blake256r8vnl (VCash)\n\
+                          veltor\n\
+                          whirlpool\n\
+                          whirlpoolx\n\
+                          x11           Dash\n\
+                          x11evo        Revolvercoin (XRE)\n\
+                          x11gost       sib (SibCoin)\n\
+                          x12           Galaxie Cash (GCH)\n\
+                          x13           X13\n\
+                          x13sm3        hsr (Hshare)\n\
+                          x14            X14\n\
+                          x15           X15\n\
+                          x16r          Ravencoin (RVN)\n\
+                          x16s          Pigeoncoin (PGN)\n\
+                          x17\n\
+                          xevan         Bitsend (BSD)\n\
+                          yescrypt      Globlboost-Y (BSTY)\n\
+                          yescryptr8    BitZeny (ZNY)\n\
+                          yescryptr16   Yenten (YTN)\n\
+                          yescryptr32   WAVI\n\
+                          zr5           Ziftr\n\
   -o, --url=URL         URL of mining server\n\
   -O, --userpass=U:P    username:password pair for mining server\n\
   -u, --user=USERNAME   username for mining server\n\
   -p, --pass=PASSWORD   password for mining server\n\
-	  --cert=FILE       certificate for mining server using SSL\n\
+      --cert=FILE       certificate for mining server using SSL\n\
   -x, --proxy=[PROTOCOL://]HOST[:PORT]  connect through a proxy\n\
   -t, --threads=N       number of miner threads (default: number of processors)\n\
   -r, --retries=N       number of times to retry if a network call fails\n\
-						  (default: retry indefinitely)\n\
+                          (default: retry indefinitely)\n\
   -R, --retry-pause=N   time to pause between retries, in seconds (default: 30)\n\
-	  --time-limit=N    maximum time [s] to mine before exiting the program.\n\
+      --time-limit=N    maximum time [s] to mine before exiting the program.\n\
   -T, --timeout=N       timeout for long poll and stratum (default: 300 seconds)\n\
   -s, --scantime=N      upper bound on time spent scanning current work when\n\
-						  long polling is unavailable, in seconds (default: 5)\n\
-	  --randomize       Randomize scan range start to reduce duplicates\n\
+                          long polling is unavailable, in seconds (default: 5)\n\
+      --randomize       Randomize scan range start to reduce duplicates\n\
   -f, --diff-factor     Divide req. difficulty by this factor (std is 1.0)\n\
   -m, --diff-multiplier Multiply difficulty by this factor (std is 1.0)\n\
-	  --hide-diff       Do not display changes in difficulty\n\
-	  --coinbase-addr=ADDR  payout address for solo mining\n\
-	  --coinbase-sig=TEXT  data to insert in the coinbase when possible\n\
-	  --no-longpoll     disable long polling support\n\
-	  --no-getwork      disable getwork support\n\
-	  --no-gbt          disable getblocktemplate support\n\
-	  --no-stratum      disable X-Stratum support\n\
-	  --no-extranonce   disable Stratum extranonce support\n\
-	  --no-redirect     ignore requests to change the URL of the mining server\n\
+      --hide-diff       Do not display changes in difficulty\n\
+      --coinbase-addr=ADDR  payout address for solo mining\n\
+      --coinbase-sig=TEXT  data to insert in the coinbase when possible\n\
+      --no-longpoll     disable long polling support\n\
+      --no-getwork      disable getwork support\n\
+      --no-gbt          disable getblocktemplate support\n\
+      --no-stratum      disable X-Stratum support\n\
+      --no-extranonce   disable Stratum extranonce support\n\
+      --no-redirect     ignore requests to change the URL of the mining server\n\
   -q, --quiet           disable per-thread hashmeter output\n\
-	  --no-color        disable colored output\n\
+      --no-color        disable colored output\n\
   -D, --debug           enable debug output\n\
   -P, --protocol-dump   verbose dump of protocol-level activities\n"
 #ifdef HAVE_SYSLOG_H
@@ -839,88 +845,94 @@ Options:\n\
 #endif
 "\
   -B, --background      run the miner in the background\n\
-	  --benchmark       run in offline benchmark mode\n\
-	  --cputest         debug hashes from cpu algorithms\n\
-	  --cpu-affinity    set process affinity to cpu core(s), mask 0x3 for cores 0 and 1\n\
-	  --cpu-priority    set process priority (default: 0 idle, 2 normal to 5 highest)\n\
+      --benchmark       run in offline benchmark mode\n\
+      --cputest         debug hashes from cpu algorithms\n\
+      --cpu-affinity    set process affinity to cpu core(s), mask 0x3 for cores 0 and 1\n\
+      --cpu-priority    set process priority (default: 0 idle, 2 normal to 5 highest)\n\
   -b, --api-bind        IP/Port for the miner API (default: 127.0.0.1:4048)\n\
-	  --api-remote      Allow remote control\n\
-	  --max-temp=N      Only mine if cpu temp is less than specified value (linux)\n\
-	  --max-rate=N[KMG] Only mine if net hashrate is less than specified value\n\
-	  --max-diff=N      Only mine if net difficulty is less than specified value\n\
-	  --use-gpu=CUDA|OPENCL Use GPU for algorithms supporting it (Argon2d)\n\
-	  --gpu-id=N1,N2    Use GPU devices with specific indexes in detected devices\n\
-						  default use all devices\n\
-	  --gpu-batchsize=N Specify batch size - default 1\n\
-	  -c, --config=FILE load a JSON-format configuration file\n\
-	  -V, --version     display version information and exit\n\
-	  -h, --help        display this help text and exit\n\
+      --api-remote      Allow remote control\n\
+      --max-temp=N      Only mine if cpu temp is less than specified value (linux)\n\
+      --max-rate=N[KMG] Only mine if net hashrate is less than specified value\n\
+      --max-diff=N      Only mine if net difficulty is less than specified value\n\
+      --use-cpu         Use CPU for mining (valid only in combination with use-gpu argument)\n\
+      --use-gpu=CUDA|OPENCL Use GPU for algorithms supporting it (Argon2d)\n\
+      --gpu-id=N1,N2    Use GPU devices with specific indexes in detected devices\n\
+                          default use all devices\n\
+      --gpu-batchsize=N Specify batch size - default 1\n\
+      --cpu-threads     how many threads to use for cpu mining (valid only in combination with use-gpu & use-cpu arguments)\
+      --gpu-threads     how many threads to use for gpu mining (valid only in combination with use-gpu argument)\
+      -c, --config=FILE load a JSON-format configuration file\n\
+      -V, --version     display version information and exit\n\
+      -h, --help        display this help text and exit\n\
 ";
 
 #ifdef HAVE_GETOPT_LONG
 #include <getopt.h>
 #else
 struct option {
-		const char *name;
-		int has_arg;
-		int *flag;
-		int val;
+        const char *name;
+        int has_arg;
+        int *flag;
+        int val;
 };
 #endif
 
 
 static struct option const options[] = {
-		{ "algo", 1, NULL, 'a' },
-		{ "api-bind", 1, NULL, 'b' },
-		{ "api-remote", 0, NULL, 1030 },
-		{ "background", 0, NULL, 'B' },
-		{ "benchmark", 0, NULL, 1005 },
-		{ "cputest", 0, NULL, 1006 },
-		{ "cert", 1, NULL, 1001 },
-		{ "coinbase-addr", 1, NULL, 1016 },
-		{ "coinbase-sig", 1, NULL, 1015 },
-		{ "config", 1, NULL, 'c' },
-		{ "cpu-affinity", 1, NULL, 1020 },
-		{ "cpu-priority", 1, NULL, 1021 },
-		{ "use-gpu", 1, NULL, 1070 },
-		{ "gpu-id", 1, NULL, 1071 },
-		{ "gpu-batchsize", 1, NULL, 1072 },
-		{ "no-color", 0, NULL, 1002 },
-		{ "debug", 0, NULL, 'D' },
-		{ "diff-factor", 1, NULL, 'f' },
-		{ "diff", 1, NULL, 'f' }, // deprecated (alias)
-		{ "diff-multiplier", 1, NULL, 'm' },
-		{ "hide-diff", 0, NULL, 1013 },
-		{ "help", 0, NULL, 'h' },
-		{ "no-gbt", 0, NULL, 1011 },
-		{ "no-getwork", 0, NULL, 1010 },
-		{ "no-longpoll", 0, NULL, 1003 },
-		{ "no-redirect", 0, NULL, 1009 },
-		{ "no-stratum", 0, NULL, 1007 },
-		{ "no-extranonce", 0, NULL, 1012 },
-		{ "max-temp", 1, NULL, 1060 },
-		{ "max-diff", 1, NULL, 1061 },
-		{ "max-rate", 1, NULL, 1062 },
-		{ "pass", 1, NULL, 'p' },
-		{ "protocol", 0, NULL, 'P' },
-		{ "protocol-dump", 0, NULL, 'P' },
-		{ "proxy", 1, NULL, 'x' },
-		{ "quiet", 0, NULL, 'q' },
-		{ "retries", 1, NULL, 'r' },
-		{ "retry-pause", 1, NULL, 'R' },
-		{ "randomize", 0, NULL, 1024 },
-		{ "scantime", 1, NULL, 's' },
+        { "algo", 1, NULL, 'a' },
+        { "api-bind", 1, NULL, 'b' },
+        { "api-remote", 0, NULL, 1030 },
+        { "background", 0, NULL, 'B' },
+        { "benchmark", 0, NULL, 1005 },
+        { "cputest", 0, NULL, 1006 },
+        { "cert", 1, NULL, 1001 },
+        { "coinbase-addr", 1, NULL, 1016 },
+        { "coinbase-sig", 1, NULL, 1015 },
+        { "config", 1, NULL, 'c' },
+        { "cpu-affinity", 1, NULL, 1020 },
+        { "cpu-priority", 1, NULL, 1021 },
+        { "use-cpu", 0, NULL, 1073 },
+        { "cpu-threads", 1, NULL, 1074 },
+        { "gpu-threads", 1, NULL, 1075 },
+        { "use-gpu", 1, NULL, 1070 },
+        { "gpu-id", 1, NULL, 1071 },
+        { "gpu-batchsize", 1, NULL, 1072 },
+        { "no-color", 0, NULL, 1002 },
+        { "debug", 0, NULL, 'D' },
+        { "diff-factor", 1, NULL, 'f' },
+        { "diff", 1, NULL, 'f' }, // deprecated (alias)
+        { "diff-multiplier", 1, NULL, 'm' },
+        { "hide-diff", 0, NULL, 1013 },
+        { "help", 0, NULL, 'h' },
+        { "no-gbt", 0, NULL, 1011 },
+        { "no-getwork", 0, NULL, 1010 },
+        { "no-longpoll", 0, NULL, 1003 },
+        { "no-redirect", 0, NULL, 1009 },
+        { "no-stratum", 0, NULL, 1007 },
+        { "no-extranonce", 0, NULL, 1012 },
+        { "max-temp", 1, NULL, 1060 },
+        { "max-diff", 1, NULL, 1061 },
+        { "max-rate", 1, NULL, 1062 },
+        { "pass", 1, NULL, 'p' },
+        { "protocol", 0, NULL, 'P' },
+        { "protocol-dump", 0, NULL, 'P' },
+        { "proxy", 1, NULL, 'x' },
+        { "quiet", 0, NULL, 'q' },
+        { "retries", 1, NULL, 'r' },
+        { "retry-pause", 1, NULL, 'R' },
+        { "randomize", 0, NULL, 1024 },
+        { "scantime", 1, NULL, 's' },
 #ifdef HAVE_SYSLOG_H
-		{ "syslog", 0, NULL, 'S' },
+        { "syslog", 0, NULL, 'S' },
 #endif
-		{ "time-limit", 1, NULL, 1008 },
-		{ "threads", 1, NULL, 't' },
-		{ "timeout", 1, NULL, 'T' },
-		{ "url", 1, NULL, 'o' },
-		{ "user", 1, NULL, 'u' },
-		{ "userpass", 1, NULL, 'O' },
-		{ "version", 0, NULL, 'V' },
-		{ 0, 0, 0, 0 }
+        { "time-limit", 1, NULL, 1008 },
+        { "threads", 1, NULL, 't' },
+        { "timeout", 1, NULL, 'T' },
+        { "url", 1, NULL, 'o' },
+        { "user", 1, NULL, 'u' },
+        { "userpass", 1, NULL, 'O' },
+        { "version", 0, NULL, 'V' },
+        { 0, 0, 0, 0 }
 };
 
 

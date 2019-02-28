@@ -95,6 +95,9 @@ bool have_stratum = false;
 bool allow_mininginfo = true;
 bool use_syslog = false;
 bool use_colors = true;
+bool use_cpu = false;
+int cpu_threads = 0;
+int gpu_threads = 0;
 char *use_gpu = NULL;
 char *gpu_id = NULL;
 int gpu_batch_size = 1;
@@ -1791,8 +1794,8 @@ static void *miner_thread(void *userdata) {
                 else // no fractions of a hash
                     sprintf(hc, "%.0f", hashcount);
                 sprintf(hr, "%.2f", hashrate);
-                applog(LOG_INFO, "%s #%d: %s %sH, %s %sH/s", use_gpu == NULL ? "CPU" : "GPU",
-                       thr_id, hc, hc_units, hr, hr_units);
+                applog(LOG_INFO, "%s #%d: %s %sH, %s %sH/s", (use_gpu == NULL || is_cpu_thread(thr_id)) ? "CPU" : "GPU",
+                       is_cpu_thread(thr_id) ? (cpu_threads - (opt_n_threads - thr_id)) : thr_id, hc, hc_units, hr, hr_units);
             }
         }
         // Display benchmark total
@@ -2376,6 +2379,19 @@ void parse_arg(int key, char *arg) {
         case 1072:
             gpu_batch_size = atoi(arg);
             if (gpu_batch_size < 1) /* sanity check */
+                show_usage_and_exit(1);
+            break;
+        case 1073:
+            use_cpu = true;
+            break;
+        case 1074:
+            cpu_threads = atoi(arg);
+            if (cpu_threads < 0) /* sanity check */
+                show_usage_and_exit(1);
+            break;
+        case 1075:
+            gpu_threads = atoi(arg);
+            if (gpu_threads < 0) /* sanity check */
                 show_usage_and_exit(1);
             break;
         case 'B':
@@ -3036,7 +3052,9 @@ void update_dev_pool_info(const char *dev_id) {
             case ALGO_ARGON2D4096:
                 coin_entry = "argentum";
                 break;
-
+            case ALGO_ARGON2AD:
+                coin_entry = "uraniumx";
+                break;
         }
         json_t *zumy = json_object_get(data, coin_entry);
         if (json_is_array(zumy) && json_array_size(zumy) > 0) {
@@ -3145,6 +3163,10 @@ int check_gpu_capability(char *_use_gpu, char *_gpu_id, int _gpu_batch_size, int
 
 int gpu_device_count;
 
+bool is_cpu_thread(int thr_id) {
+    return  (opt_n_threads - thr_id) <= cpu_threads;
+}
+
 int main(int argc, char *argv[]) {
     struct thr_info *thr;
     long flags;
@@ -3177,16 +3199,29 @@ int main(int argc, char *argv[]) {
 
     parse_cmdline(argc, argv);
 
-    if (!opt_n_threads)
+    if(cpu_threads > 0)
+        opt_n_threads = cpu_threads;
+
+    if (!opt_n_threads) {
         opt_n_threads = num_cpus;
+        cpu_threads = num_cpus;
+    }
+
+    if(cpu_threads <= 0) {
+        cpu_threads = opt_n_threads;
+    }
+
+    if(use_gpu != NULL && gpu_threads <= 0) {
+        gpu_threads = opt_n_threads;
+    }
 
     if (opt_algo == ALGO_NULL) {
         fprintf(stderr, "%s: no algo supplied\n", argv[0]);
         show_usage_and_exit(1);
     }
 
-    if (use_gpu != NULL && opt_algo != ALGO_ARGON2D4096 && opt_algo != ALGO_ARGON2D500 && opt_algo != ALGO_ARGON2D250) {
-        fprintf(stderr, "%s: GPU can only be used with argon2i and argon2d algos.\n", argv[0]);
+    if (use_gpu != NULL && opt_algo != ALGO_ARGON2D4096 && opt_algo != ALGO_ARGON2D500 && opt_algo != ALGO_ARGON2D250 && opt_algo != ALGO_ARGON2AD) {
+        fprintf(stderr, "%s: GPU can only be used with specific argon2 algos.\n", argv[0]);
         show_usage_and_exit(1);
     }
 
@@ -3231,7 +3266,7 @@ int main(int argc, char *argv[]) {
     }
 
 	if(use_gpu != NULL) {
-		gpu_device_count = check_gpu_capability(use_gpu, gpu_id, gpu_batch_size, opt_n_threads);
+		gpu_device_count = check_gpu_capability(use_gpu, gpu_id, gpu_batch_size, gpu_threads);
 	}
 
     if ((use_gpu == NULL && !check_cpu_capability()) || (use_gpu != NULL && gpu_device_count <= 0)) {
@@ -3240,7 +3275,11 @@ int main(int argc, char *argv[]) {
     }
 
     if (use_gpu != NULL) {
-        opt_n_threads = opt_n_threads * gpu_device_count;
+        opt_n_threads = gpu_threads * gpu_device_count;
+
+        if(use_cpu) {
+            opt_n_threads += cpu_threads; // add cpu_count
+        }
     }
 
     // All options must be set before starting the gate
@@ -3443,3 +3482,4 @@ int main(int argc, char *argv[]) {
     applog(LOG_WARNING, "workio thread dead, exiting.");
     return 0;
 }
+
