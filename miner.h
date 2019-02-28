@@ -674,7 +674,7 @@ extern int opt_timeout;
 extern "C" {
 #endif
 extern char *use_gpu;
-extern char *use_cpu;
+extern bool use_cpu;
 extern char *gpu_id;
 extern int gpu_batch_size;
 extern int gpu_threads;
