@@ -126,6 +126,10 @@ bool init_thread_argon2d_crds_gpu(int thr_id) {
 	return init_thread_argon2d(thr_id, ARGON2_D, ARGON2_VERSION_10, new Argon2Params(32, nullptr, 0, nullptr, 0, nullptr, 0, 1, 250, 4));
 }
 
+bool init_thread_argon2d16000_gpu(int thr_id) {
+	return init_thread_argon2d(thr_id, ARGON2_D, ARGON2_VERSION_10, new Argon2Params(32, nullptr, 0, nullptr, 0, nullptr, 0, 1, 16000, 1));
+}
+
 argon2_gpu_hasher_thread *get_gpu_thread_data(int thr_id) {
 	argon2_gpu_hasher_thread *thread_data = NULL;
 	argon2_gpu_hashers_mutex.lock();

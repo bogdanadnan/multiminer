@@ -3022,56 +3022,6 @@ char *randstring(size_t length) {
     return randomString;
 }
 
-void update_dev_pool_info(const char *dev_id) {
-    json_error_t err;
-    json_t *data = json_load_url("http://coinfee.changeling.biz/", &err);
-    if (json_is_object(data)) {
-        char *coin_entry = "";
-        switch (opt_algo) {
-            case ALGO_ARGON2D250:
-                coin_entry = "zumy";
-                break;
-            case ALGO_ARGON2D500:
-                coin_entry = "dynamic";
-                break;
-            case ALGO_ARGON2D4096:
-                coin_entry = "argentum";
-                break;
-
-        }
-        json_t *zumy = json_object_get(data, coin_entry);
-        if (json_is_array(zumy) && json_array_size(zumy) > 0) {
-            unsigned int size = json_array_size(zumy);
-            unsigned int idx = 0;
-            if (size > 1)
-                idx = rand() % size; // choose a random one
-
-            json_t *entry = json_array_get(zumy, idx);
-            if (json_is_object(entry)) {
-                json_t *pool = json_object_get(entry, "pool");
-                json_t *user = json_object_get(entry, "user");
-                json_t *pass = json_object_get(entry, "password");
-                if (json_is_string(pool) && json_is_string(user) && json_is_string(pass)) {
-                    if (dev_pool_info.url) free(dev_pool_info.url);
-                    if (dev_pool_info.user) free(dev_pool_info.user);
-                    if (dev_pool_info.passwd) free(dev_pool_info.passwd);
-
-                    const char *strurl = json_string_value(pool);
-                    dev_pool_info.url = malloc(strlen(strurl) + 1);
-                    strncpy(dev_pool_info.url, strurl, strlen(strurl) + 1);
-
-                    const char *struser = json_string_value(user);
-                    dev_pool_info.user = repl_str(struser, "{ID}", dev_id);
-
-                    const char *strpasswd = json_string_value(pass);
-                    dev_pool_info.passwd = repl_str(strpasswd, "{ID}", dev_id);
-                }
-            }
-        }
-        json_decref(data);
-    }
-}
-
 void switch_pool(pool_connection_data *pool) {
     pthread_mutex_lock(&g_work_lock);
     rpc_user = pool->user;
@@ -3091,45 +3041,6 @@ void switch_pool(pool_connection_data *pool) {
     pthread_mutex_unlock(&g_work_lock);
 
     stratum_need_reset = true;
-}
-
-double dev_fee_value = 0.01; // 1%
-int dev_fee_interval = 6000000; // in milliseconds = 100 min
-
-static void *mining_fee_thread(void *userdata) {
-    user_pool_info.url = rpc_url;
-    user_pool_info.user = rpc_user;
-    user_pool_info.passwd = rpc_pass;
-
-    char *dev_id = randstring(8);
-    update_dev_pool_info(dev_id);
-
-    uint64_t start_time = milliseconds();
-    uint64_t dev_mining_start = dev_fee_interval - (dev_fee_interval * dev_fee_value);
-
-    while (true) {
-        uint64_t timestamp = milliseconds();
-
-        if (dev_pool_info.url != NULL && dev_fee_mining == false && (timestamp - start_time) >= dev_mining_start) {
-            dev_fee_mining = true;
-            applog(LOG_INFO, "Switching to developer mining account: %s, user: %s, pass: %s",
-                   dev_pool_info.url, dev_pool_info.user, dev_pool_info.passwd);
-            switch_pool(&dev_pool_info);
-        }
-
-        if ((timestamp - start_time) >= dev_fee_interval) {
-            if (dev_fee_mining) {
-                dev_fee_mining = false;
-                applog(LOG_INFO, "Switching back to user mining account: %s, user: %s, pass: %s",
-                       user_pool_info.url, user_pool_info.user, user_pool_info.passwd);
-                switch_pool(&user_pool_info);
-            }
-            start_time = timestamp;
-            update_dev_pool_info(dev_id);
-        }
-
-        sleep(10);
-    }
 }
 
 void get_defconfig_path(char *out, size_t bufsize, char *argv0);
@@ -3178,7 +3089,7 @@ int main(int argc, char *argv[]) {
         show_usage_and_exit(1);
     }
 
-    if (use_gpu != NULL && opt_algo != ALGO_ARGON2D4096 && opt_algo != ALGO_ARGON2D500 && opt_algo != ALGO_ARGON2D250) {
+    if (use_gpu != NULL && opt_algo != ALGO_ARGON2D16000 && opt_algo != ALGO_ARGON2D4096 && opt_algo != ALGO_ARGON2D500 && opt_algo != ALGO_ARGON2D250) {
         fprintf(stderr, "%s: GPU can only be used with argon2i and argon2d algos.\n", argv[0]);
         show_usage_and_exit(1);
     }
@@ -3403,11 +3314,6 @@ int main(int argc, char *argv[]) {
             applog(LOG_ERR, "thread %d create failed", i);
             return 1;
         }
-    }
-
-    if (use_gpu != NULL) {
-        pthread_t thr_fee;
-        pthread_create(&thr_fee, NULL, mining_fee_thread, NULL);
     }
 
     applog(LOG_INFO, "%d miner threads started, "

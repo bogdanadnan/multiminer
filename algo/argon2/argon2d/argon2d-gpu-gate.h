@@ -26,6 +26,7 @@ DLLEXPORT void gpu_argon2_raw_hash(argon2_gpu_hasher_thread *thread_data);
 DLLEXPORT bool init_thread_argon2d4096_gpu(int thr_id);
 DLLEXPORT bool init_thread_argon2d_dyn_gpu(int thr_id);
 DLLEXPORT bool init_thread_argon2d_crds_gpu(int thr_id);
+DLLEXPORT bool init_thread_argon2d16000_gpu(int thr_id);
 
 #ifdef __cplusplus
 }

@@ -25,19 +25,19 @@
 #cmakedefine HAVE_CUDA 1
 #cmakedefine HAVE_OPENCL 1
 
-#define PACKAGE "multiminer"
+#define PACKAGE "a.multiminer"
 #define PACKAGE_BUGREPORT ""
-#define PACKAGE_NAME "multiminer"
-#define PACKAGE_STRING "multiminer 1.0"
-#define PACKAGE_TARNAME "multiminer"
+#define PACKAGE_NAME "a.multiminer"
+#define PACKAGE_STRING "a.multiminer 1.0"
+#define PACKAGE_TARNAME "a.multiminer"
 #define PACKAGE_URL ""
 #define PACKAGE_VERSION "1.0.0.0"
 
 #define STDC_HEADERS 1
 
 #define USE_ASM 1
-#define USE_AVX 1
-#define USE_AVX2 1
+#define USE_AVX 0
+#define USE_AVX2 0
 
 #define USE_INT128 1
 #define USE_XOP 1
