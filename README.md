@@ -57,47 +57,68 @@ The following instructions have been supplied by frozen80 from the Alterdot comm
 Follow the tutorial on the page to update the system packages.
     
     First step:
-        pacman -Syu
+    ```sh
+    pacman -Syu
+    ```
     Second step(after restart of msys):
-        pacman -Su
-    Third step: Install some tools for compilation : 
-        pacman -S --needed base-devel mingw-w64-x86_64-toolchain
-        pacman -S mingw-w64-x86_64-cmake
-        pacman -S mingw-w64-x86_64-opencl-headers
-        pacman -S mingw-w64-x86_64-opencl-icd
+    ```sh
+    pacman -Su
+    ```
+    Third step: Install some tools for compilation:
+    ```sh
+    pacman -S --needed base-devel mingw-w64-x86_64-toolchain
+    pacman -S mingw-w64-x86_64-cmake
+    pacman -S mingw-w64-x86_64-opencl-headers
+    pacman -S mingw-w64-x86_64-opencl-icd
+    ```
 
 2. Open "MSYS2 MinGW x64" shortcut and check if you have all the tools properly installed
-   gcc -v
-   g++ -v
-   cmake --version
-   Now we need to create a symlink to mingw32-make.exe: cd /mingw64/bin/ && ln mingw32-make.exe make.exe
-   make -v
+    ```sh
+    gcc -v
+    g++ -v
+    cmake --version
+    ```
+   Now we need to create a symlink to mingw32-make.exe:
+    ```sh
+    cd /mingw64/bin/ && ln mingw32-make.exe make.exe
+    make -v
+    ```
 
-3. Go to Windows environment variables and add C:/msys64/mingw64/bin to your path.
+3. Go to Windows environment variables and the msys64/mingw64/bin folder (usually C:/msys64/mingw64/bin) to your path.
 
 4. Download the a.multiminer source code and unzip it. Create a folder named build inside. Open a command prompt and navigate to the build folder. Before we can compile we need to make a few changes to the source code:
+    
     Edit file CMakeLists.txt.
 
     Uncomment these lines after line 4 (delete the #):
-
+    ```sh
     set(DEPRECATION_FLAGS "-Xlinker --allow-multiple-definition -Wno-error=deprecated")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEPRECATION_FLAGS}")
     set(C_DEP_FLAGS "-Wno-pointer-sign -Wno-pointer-to-int-cast")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_DEP_FLAGS}")
     set(NO_CUDA TRUE)
+    ```
 
-    Go to line 313 and change: target_compile_options(a.multiminer PRIVATE -O3 -mtune=native -march=native -I.) to target_compile_options(a.multiminer PRIVATE -O1 -mtune=native -march=native -I.)
-
+    Go to line 313 and change:
+    ```sh
+    target_compile_options(a.multiminer PRIVATE -O3 -mtune=native -march=native -I.)
+    ```
+    to 
+    ```sh
+    target_compile_options(a.multiminer PRIVATE -O1 -mtune=native -march=native -I.)
+    ```
     Now go back to command prompt and make sure you are in the build folder created earlier.
+    ```sh
     cmake .. -G "MinGW Makefiles"
     make -j 4
+    ```
 
 4. Your a.multiminer.exe file should be available in the build folder.
 
 Linux Building Process
 ---------------------
 
-These build instructions are for Ubuntu 18.04 & 16.04. For any other distribution you might
+These build instructions are for Ubuntu 20.04, 18.04 and 16.04. For any other distribution you might
 need to adapt them accordingly (especially CUDA installation). Also keep in mind CUDA
 toolkit installed in the following manner might change your drivers. The miner should
 compile ok without CUDA, case in which it will use only OpenCL. Just skip any CUDA mention
@@ -107,7 +128,7 @@ from following instructions if you don't need it.
 ```sh
 sudo apt-get install git cmake gcc g++ libjansson-dev libcurl4-openssl-dev libssl-dev libgmp-dev ocl-icd-opencl-dev  
 ```
-2. Install CUDA toolkit (vers. 9.x or newer). This process differes on Ubuntu 16.04 and 18.04
+2. Install CUDA toolkit (vers. 9.x or newer). This process differes on different Ubuntu versions.
 
 For Ubuntu 16.04, default nvidia toolkit is too old so please follow the instructions from 
 Nvidia site to get a newer version: 
@@ -123,6 +144,9 @@ using this command:
 ```sh
 gcc --version
 ```
+
+For Ubuntu 20.04, you can use CUDA 10.x.
+
 If compiler version is different than 6 than do this (next commands suppose you have 7 as default version, 
 change accordingly if this is not the case):
 ```sh
@@ -137,21 +161,17 @@ sudo update-alternatives --config g++
 ```
 3. Clone the repository:
 ```sh
-git clone http://github.com/bogdanadnan/multiminer
-```
-Or to clone beta branch (for latest improvements):
-```sh
-git clone -b beta http://github.com/bogdanadnan/multiminer
+git clone http://github.com/Alterdot/a.multiminer
 ```
 4. Build the source code:
 ```sh
-cd multiminer
+cd a.multiminer
 mkdir build
 cd build
 cmake ..
 make
 ```
-5. You should now have a binary called multiminer in current folder.
+5. You should now have a binary called a.multiminer in current folder.
 
 Usage
 -----
@@ -177,7 +197,7 @@ and 4096KiB for Argentum/Unitus) should not exceed available card memory.
 Sample command line:
 
 ```sh
-./multiminer -a argon2d16000 -o stratum+tcp://pooladdress:port -u walletaddress -p c=ADOT,workername --use-gpu CUDA -t 2 --gpu-batchsize 64
+./a.multiminer -a argon2d16000 -o stratum+tcp://pooladdress:port -u walletaddress -p c=ADOT,workername --use-gpu CUDA -t 2 --gpu-batchsize 64
 ```
 
 When using OpenCL keep in mind that the program will take a LOT of time to start
