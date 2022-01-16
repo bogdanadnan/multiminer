@@ -49,11 +49,50 @@ MacOS, OSx and Android are not supported.
 
 3. Stratum pool. Some algos may work wallet mining using getwork or GBT. YMMV.
 
-Windows Binaries
----------------
-For Windows, you are lucky :) ... binaries are available in the release section of this
-project.
-https://github.com/bogdanadnan/multiminer/releases
+Windows Building Process
+---------------------
+The following instructions have been supplied by frozen80 from the Alterdot community and they can be used to compile a.multiminer for Windows with OpenCL only. It will work for both Nvidia and AMD cards. CUDA support can be enabled on Linux for now.
+
+1. Download MSYS2 from here https://www.msys2.org/ and install the necessary tools. 
+Follow the tutorial on the page to update the system packages.
+    
+    First step:
+        pacman -Syu
+    Second step(after restart of msys):
+        pacman -Su
+    Third step: Install some tools for compilation : 
+        pacman -S --needed base-devel mingw-w64-x86_64-toolchain
+        pacman -S mingw-w64-x86_64-cmake
+        pacman -S mingw-w64-x86_64-opencl-headers
+        pacman -S mingw-w64-x86_64-opencl-icd
+
+2. Open "MSYS2 MinGW x64" shortcut and check if you have all the tools properly installed
+   gcc -v
+   g++ -v
+   cmake --version
+   Now we need to create a symlink to mingw32-make.exe: cd /mingw64/bin/ && ln mingw32-make.exe make.exe
+   make -v
+
+3. Go to Windows environment variables and add C:/msys64/mingw64/bin to your path.
+
+4. Download the a.multiminer source code and unzip it. Create a folder named build inside. Open a command prompt and navigate to the build folder. Before we can compile we need to make a few changes to the source code:
+    Edit file CMakeLists.txt.
+
+    Uncomment these lines after line 4 (delete the #):
+
+    set(DEPRECATION_FLAGS "-Xlinker --allow-multiple-definition -Wno-error=deprecated")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEPRECATION_FLAGS}")
+    set(C_DEP_FLAGS "-Wno-pointer-sign -Wno-pointer-to-int-cast")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_DEP_FLAGS}")
+    set(NO_CUDA TRUE)
+
+    Go to line 313 and change: target_compile_options(a.multiminer PRIVATE -O3 -mtune=native -march=native -I.) to target_compile_options(a.multiminer PRIVATE -O1 -mtune=native -march=native -I.)
+
+    Now go back to command prompt and make sure you are in the build folder created earlier.
+    cmake .. -G "MinGW Makefiles"
+    make -j 4
+
+4. Your a.multiminer.exe file should be available in the build folder.
 
 Linux Building Process
 ---------------------

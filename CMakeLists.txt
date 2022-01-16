@@ -1,7 +1,14 @@
 cmake_minimum_required (VERSION 2.8)
 project (a.multiminer C ASM CXX)
-set (CMAKE_CXX_STANDARD 11)
-set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
+
+# Windows build additional configuration
+# set(DEPRECATION_FLAGS "-Xlinker --allow-multiple-definition -Wno-error=deprecated")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEPRECATION_FLAGS}")
+# set(C_DEP_FLAGS "-Wno-pointer-sign -Wno-pointer-to-int-cast")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_DEP_FLAGS}")
+# set(NO_CUDA TRUE)
 
 SET(CMAKE_SKIP_BUILD_RPATH FALSE)
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
@@ -303,6 +310,7 @@ target_link_libraries(a.multiminer mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_
 IF (WIN32)
 	target_link_libraries(a.multiminer -lws2_32)
 ENDIF()
+# Windows build works with O1 instead of O3
 target_compile_options(a.multiminer PRIVATE -O3 -mtune=native -march=native -I.)
 
 IF (BUILD_ALL_ARCH)

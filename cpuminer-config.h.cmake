@@ -28,10 +28,10 @@
 #define PACKAGE "a.multiminer"
 #define PACKAGE_BUGREPORT ""
 #define PACKAGE_NAME "a.multiminer"
-#define PACKAGE_STRING "a.multiminer 1.0.0"
+#define PACKAGE_STRING "a.multiminer 1.0.1"
 #define PACKAGE_TARNAME "a.multiminer"
 #define PACKAGE_URL ""
-#define PACKAGE_VERSION "1.0.0"
+#define PACKAGE_VERSION "1.0.1"
 
 #define STDC_HEADERS 1
 
@@ -42,4 +42,4 @@
 #define USE_INT128 1
 #define USE_XOP 1
 
-#define VERSION "1.0.0"
+#define VERSION "1.0.1"
