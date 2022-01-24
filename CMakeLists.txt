@@ -312,9 +312,9 @@ IF (WIN32)
 ENDIF()
 
 IF (WIN32)
-     target_compile_options(a.multiminer PRIVATE -O1 -mtune=native -march=native -I.)
+     target_compile_options(multiminer PRIVATE -O1 -mtune=native -march=native -I.)
 ELSE()
-     target_compile_options(a.multiminer PRIVATE -O3 -mtune=native -march=native -I.)
+     target_compile_options(multiminer PRIVATE -O3 -mtune=native -march=native -I.)
 ENDIF()
 
 IF (BUILD_ALL_ARCH)
