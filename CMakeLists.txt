@@ -3,6 +3,13 @@ project (multiminer C ASM CXX)
 set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 
+IF (WIN32 AND NOT MSVC)
+    set(DEPRECATION_FLAGS "-Xlinker --allow-multiple-definition -w")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEPRECATION_FLAGS}")
+    set(C_DEP_FLAGS "-w")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_DEP_FLAGS}")
+ENDIF()
+
 SET(CMAKE_SKIP_BUILD_RPATH FALSE)
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 SET(CMAKE_INSTALL_RPATH "./")
@@ -303,7 +310,12 @@ target_link_libraries(multiminer mm_gpu_gate ${CMAKE_THREAD_LIBS_INIT} ${CURL_LI
 IF (WIN32)
 	target_link_libraries(multiminer -lws2_32)
 ENDIF()
-target_compile_options(multiminer PRIVATE -O3 -mtune=native -march=native -I.)
+
+IF (WIN32)
+     target_compile_options(multiminer PRIVATE -O1 -mtune=native -march=native -I.)
+ELSE()
+     target_compile_options(multiminer PRIVATE -O3 -mtune=native -march=native -I.)
+ENDIF()
 
 IF (BUILD_ALL_ARCH)
 	add_executable(multiminer-sse2 ${SOURCE})
